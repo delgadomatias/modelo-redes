@@ -1076,32 +1076,54 @@ class PriorityQueue {
 }
 
 class Graph {
-  constructor(vertices) {
-    this.vertices = vertices;
-    this.edges = Array(vertices)
-      .fill(null)
-      .map(() => Array(vertices).fill(Infinity));
-    this.visited = Array(vertices).fill(false);
+  constructor() {
+    this.edges = {}; // Usamos un objeto para almacenar las aristas
+    this.visited = {}; // Usamos un objeto para llevar el registro de visitados
   }
 
   addEdge(src, dest, weight) {
+    if (!this.edges[src]) this.edges[src] = {};
+    if (!this.edges[dest]) this.edges[dest] = {};
+
     this.edges[src][dest] = weight;
-    this.edges[dest][src] = weight;
+    this.edges[dest][src] = weight; // Grafo no dirigido
   }
 
-  primsMST() {
-    this.visited[0] = true;
-    let pq = new PriorityQueue();
-    let result = [];
+  findStartNode() {
+    for (const node in this.edges) {
+      if (Object.keys(this.edges[node]).length > 0) {
+        return node;
+      }
+    }
+    return null;
+  }
 
-    // Inicializamos la cola de prioridad con las aristas del vértice 0
-    for (let j = 0; j < this.vertices; j++) {
-      if (this.edges[0][j] !== Infinity) {
-        pq.enqueue({ src: 0, dest: j }, this.edges[0][j]);
+  primsMST(startNode = null) {
+    if (!startNode) {
+      startNode = this.findStartNode();
+      if (!startNode) {
+        return []; // No hay aristas en el grafo
       }
     }
 
-    // Procesamos la cola de prioridad
+    // Inicializar el estado del grafo
+    for (const node in this.edges) {
+      this.visited[node] = false;
+    }
+
+    this.visited[startNode] = true;
+    let pq = new PriorityQueue();
+    let result = [];
+
+    // Inicializar la cola de prioridad con las aristas del nodo de inicio
+    for (const neighbor in this.edges[startNode]) {
+      pq.enqueue(
+        { src: startNode, dest: neighbor },
+        this.edges[startNode][neighbor],
+      );
+    }
+
+    // Procesar la cola de prioridad
     while (!pq.isEmpty()) {
       let {
         vertex: { src, dest },
@@ -1111,9 +1133,12 @@ class Graph {
         this.visited[dest] = true;
         result.push({ src, dest, weight });
 
-        for (let j = 0; j < this.vertices; j++) {
-          if (this.edges[dest][j] != Infinity && !this.visited[j]) {
-            pq.enqueue({ src: dest, dest: j }, this.edges[dest][j]);
+        for (const neighbor in this.edges[dest]) {
+          if (!this.visited[neighbor]) {
+            pq.enqueue(
+              { src: dest, dest: neighbor },
+              this.edges[dest][neighbor],
+            );
           }
         }
       }
@@ -1122,6 +1147,7 @@ class Graph {
     return result;
   }
 }
+
 function onReset() {
   nodes = [];
   links = [];
@@ -1138,15 +1164,18 @@ function resolveByPrim() {
   });
 
   edges.sort((a, b) => a.src - b.src || a.dest - b.dest);
-  console.log(edges);
 
-  const g = new Graph(9);
+  const g = new Graph(7);
   edges.map((edge) => {
     const { src, dest, weight } = edge;
     g.addEdge(src, dest, weight);
   });
   const mst = g.primsMST();
-  console.log(mst);
+  const totalWeight = mst.reduce((acc, { weight }) => acc + weight, 0);
+  mst.map((edge) => {
+    console.log(`From: ${edge.src} to: ${edge.dest}`);
+  });
+  console.log(`Total weight: ${totalWeight}`);
 }
 
 const resetButton = document.querySelector("#reset-btn");

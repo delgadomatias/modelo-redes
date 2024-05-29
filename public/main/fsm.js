@@ -1,3 +1,4 @@
+var lastTwoAcceptStates = [];
 var greekLetterNames = [
   "alpha",
   "beta",
@@ -142,7 +143,12 @@ var movingObject = false;
 var originalClick;
 
 function drawUsing(c) {
-  c.clearRect(0, 0, canvas.width, canvas.height);
+  c.clearRect(
+    0,
+    0,
+    canvas.getBoundingClientRect().width,
+    canvas.getBoundingClientRect().height,
+  );
   c.save();
   c.translate(0.5, 0.5);
 
@@ -228,6 +234,8 @@ function snapNode(node) {
 
 window.onload = function () {
   canvas = document.getElementById("canvas");
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
   restoreBackup();
   draw();
 
@@ -274,7 +282,21 @@ window.onload = function () {
       resetCaret();
       draw();
     } else if (selectedObject instanceof Node) {
-      selectedObject.isAcceptState = !selectedObject.isAcceptState;
+      if (selectedObject.isAcceptState) {
+        selectedObject.isAcceptState = false;
+        // Eliminar el nodo del seguimiento de los dos últimos estados de aceptación
+        lastTwoAcceptStates = lastTwoAcceptStates.filter(
+          (node) => node !== selectedObject,
+        );
+      } else {
+        // Si intentamos agregar un tercer estado de aceptación, revertir el estado del último nodo
+        if (lastTwoAcceptStates.length === 2) {
+          lastTwoAcceptStates[1].isAcceptState = false;
+          lastTwoAcceptStates.pop();
+        }
+        selectedObject.isAcceptState = true;
+        lastTwoAcceptStates.push(selectedObject);
+      }
       draw();
     }
   };
@@ -507,6 +529,14 @@ function restoreBackup() {
       node.isAcceptState = backupNode.isAcceptState;
       node.text = backupNode.text;
       nodes.push(node);
+
+      if (node.isAcceptState) {
+        if (lastTwoAcceptStates.length === 2) {
+          // Si ya tenemos dos estados de aceptación, eliminamos el más antiguo
+          lastTwoAcceptStates.shift();
+        }
+        lastTwoAcceptStates.push(node);
+      }
     }
     for (var i = 0; i < backup.links.length; i++) {
       var backupLink = backup.links[i];
@@ -672,11 +702,11 @@ class Node {
     drawText(c, this.text, this.x, this.y, null, selectedObject == this);
 
     // draw a double circle for an accept state
-    // if (this.isAcceptState) {
-    //   c.beginPath();
-    //   c.arc(this.x, this.y, nodeRadius - 6, 0, 2 * Math.PI, false);
-    //   c.stroke();
-    // }
+    if (this.isAcceptState) {
+      c.beginPath();
+      c.arc(this.x, this.y, nodeRadius - 6, 0, 2 * Math.PI, false);
+      c.stroke();
+    }
   }
 
   closestPointOnCircle(x, y) {
@@ -1174,14 +1204,107 @@ class Graph {
   }
 }
 
+// Kruskal Implementation
+
+class UnionFind {
+  constructor(elements) {
+    this.parent = {};
+
+    elements.forEach((e) => (this.parent[e] = e));
+  }
+
+  union(a, b) {
+    this.parent[this.find(a)] = this.find(b);
+  }
+
+  find(a) {
+    while (this.parent[a] !== a) {
+      a = this.parent[a];
+    }
+
+    return a;
+  }
+
+  connected(a, b) {
+    return this.find(a) === this.find(b);
+  }
+}
+
+function kruskal(graph) {
+  graph.sort((a, b) => a.weight - b.weight);
+
+  const nodes = new Set(graph.map((e) => [e.src, e.dest]).flat());
+  const unionFind = new UnionFind(nodes);
+
+  const mst = [];
+
+  for (let edge of graph) {
+    if (!unionFind.connected(edge.src, edge.dest)) {
+      unionFind.union(edge.src, edge.dest);
+      mst.push(edge);
+    }
+  }
+
+  return mst;
+}
+
+// Dijkstra
+
+function dijkstraAlgorithm(graph) {
+  const costs = Object.assign({ end: Infinity }, graph.start);
+  const parents = { end: null };
+  const processed = [];
+
+  let node = findLowestCostNode(costs, processed);
+
+  while (node) {
+    let cost = costs[node];
+    let children = graph[node];
+    for (let n in children) {
+      let newCost = cost + children[n];
+      if (!costs[n] || costs[n] > newCost) {
+        costs[n] = newCost;
+        parents[n] = node;
+      }
+    }
+    processed.push(node);
+    node = findLowestCostNode(costs, processed);
+  }
+
+  let optimalPath = ["end"];
+  let parent = parents.end;
+  while (parent) {
+    optimalPath.push(parent);
+    parent = parents[parent];
+  }
+  optimalPath.reverse();
+  return { distance: costs.end, path: optimalPath };
+}
+
+function findLowestCostNode(costs, processed) {
+  return Object.keys(costs).reduce((lowest, node) => {
+    if (lowest === null || costs[node] < costs[lowest]) {
+      if (!processed.includes(node)) {
+        lowest = node;
+      }
+    }
+    return lowest;
+  }, null);
+}
+
 function onReset() {
-  nodes = [];
-  links = [];
-  document.querySelector("#solutions-div").innerHTML = "";
-  draw();
+  const alert = confirm("¿Estás seguro de que deseas reiniciar el grafo?");
+  if (alert) {
+    nodes = [];
+    links = [];
+    document.querySelector("#solutions-div").innerHTML = "";
+    draw();
+  }
 }
 
 let mstPrimSolution = [];
+let mstKruskalSolution = [];
+let dijkstraSolution = [];
 
 function resolveByPrim() {
   // First, adapt the Edges for the solution
@@ -1202,6 +1325,68 @@ function resolveByPrim() {
 
   // Finally, resolve the MST
   mstPrimSolution = g.primsMST();
+}
+function resolveByKruskal() {
+  const edges = links.map((link) => {
+    return {
+      src: link.nodeA.text,
+      dest: link.nodeB.text,
+      weight: parseFloat(link.text),
+    };
+  });
+
+  mstKruskalSolution = kruskal(edges);
+}
+
+let graph = {};
+
+function resolveByDijkstra() {
+  //   First, adapt the input
+  //   Like this:
+  //   const graph = {
+  //     start: {A: 5, B: 2},
+  //     A: {C: 4, D: 2},
+  //     B: {A: 8, D: 7},
+  //     C: {D: 6, end: 3},
+  //     D: {end: 1},
+  //     end: {}
+  //   };
+  //   Start = accept state
+  //   End = last node with accept state
+
+  graph = {
+    start: {},
+    end: {},
+  };
+
+  if (lastTwoAcceptStates.length === 2) {
+    let startNode = lastTwoAcceptStates[0];
+    // Debo encontrar las relaciones del nodo start
+    links.map((link) => {
+      if (link.nodeA.text === startNode.text) {
+        graph.start[link.nodeB.text] = parseFloat(link.text);
+      }
+    });
+
+    nodes.map((node) => {
+      if (
+        node.text !== startNode.text &&
+        node.text !== lastTwoAcceptStates[1].text
+      ) {
+        graph[node.text] = {};
+        links.map((link) => {
+          if (link.nodeA.text === node.text) {
+            if (link.nodeB.text !== lastTwoAcceptStates[1].text) {
+              graph[node.text][link.nodeB.text] = parseFloat(link.text);
+            } else {
+              graph[node.text]["end"] = parseFloat(link.text);
+            }
+          }
+        });
+      }
+    });
+  }
+  dijkstraSolution = dijkstraAlgorithm(graph);
 }
 
 const resetButton = document.querySelector("#reset-btn");
@@ -1244,16 +1429,41 @@ const resolveButton = document.querySelector("#resolve");
 const solutionsDiv = document.querySelector("#solutions-div");
 
 resolveButton.addEventListener("click", () => {
+  const existentPrimSolution = document.querySelector("#prim-solution");
+  const existentKruskalSolution = document.querySelector("#kruskal-solution");
+  const existentDijkstraSolution = document.querySelector("#dijkstra-solution");
+
+  if (!resolveBy.includes("Prim") && existentPrimSolution) {
+    existentPrimSolution.remove();
+  }
+
+  if (!resolveBy.includes("Kruskal") && existentKruskalSolution) {
+    existentKruskalSolution.remove();
+  }
+
+  if (!resolveBy.includes("Dijkstra") && existentDijkstraSolution) {
+    existentDijkstraSolution.remove();
+  }
+
   if (resolveBy.includes("Prim")) {
     resolveByPrim();
     solutionsDiv.innerHTML = "";
+    const div = document.createElement("div");
+    const header = document.createElement("h2");
+    header.className = "font-bold";
+    header.style.fontSize = "3rem";
+    header.textContent = "Solución por el algoritmo de Prim";
+    div.append(header);
+    div.className = "flex flex-col gap-2";
+    div.id = "prim-solution";
+    solutionsDiv.append(div);
     const newCanvas = document.createElement("canvas");
     newCanvas.classList.add("bg-background");
     newCanvas.classList.add("rounded-xl");
     newCanvas.setAttribute("width", "1100");
     newCanvas.setAttribute("height", "600");
     newCanvas.id = "prim-canvas";
-    solutionsDiv.append(newCanvas);
+    div.append(newCanvas);
     const newNodes = [];
     const newLinks = [];
     mstPrimSolution.map((node) => {
@@ -1270,6 +1480,116 @@ resolveButton.addEventListener("click", () => {
       link.text = weight.toString();
       newLinks.push(link);
     });
+    drawPrimSolution(newCanvas.getContext("2d"), newNodes, newLinks);
+  }
+  if (resolveBy.includes("Kruskal")) {
+    resolveByKruskal();
+    if (existentKruskalSolution) {
+      existentKruskalSolution.remove();
+    }
+    const div = document.createElement("div");
+    const header = document.createElement("h2");
+    header.className = "font-bold";
+    header.style.fontSize = "3rem";
+    header.textContent = "Solución por el algoritmo de Kruskal";
+    div.append(header);
+    div.id = "kruskal-solution";
+    div.className = "flex flex-col gap-2";
+    solutionsDiv.append(div);
+    const newCanvas = document.createElement("canvas");
+    newCanvas.classList.add("bg-background");
+    newCanvas.classList.add("rounded-xl");
+    newCanvas.setAttribute("width", "1100");
+    newCanvas.setAttribute("height", "600");
+    newCanvas.id = "kruskal-canvas";
+    div.append(newCanvas);
+    const newNodes = [];
+    const newLinks = [];
+    mstKruskalSolution.map((node) => {
+      const { src, dest, weight } = node;
+      const oldNodePosition = nodes.find((node) => node.text === src);
+      const oldNodeDestPosition = nodes.find((node) => node.text === dest);
+      const nodeA = new Node(oldNodePosition.x, oldNodePosition.y);
+      nodeA.text = src;
+      const nodeB = new Node(oldNodeDestPosition.x, oldNodeDestPosition.y);
+      nodeB.text = dest;
+      newNodes.push(nodeA);
+      newNodes.push(nodeB);
+      const link = new Link(nodeA, nodeB);
+      link.text = weight.toString();
+      newLinks.push(link);
+    });
+
+    drawPrimSolution(newCanvas.getContext("2d"), newNodes, newLinks);
+  }
+  if (resolveBy.includes("Dijkstra")) {
+    resolveByDijkstra();
+    if (existentDijkstraSolution) {
+      existentDijkstraSolution.remove();
+    }
+    const div = document.createElement("div");
+    const header = document.createElement("h2");
+    header.className = "font-bold";
+    header.style.fontSize = "3rem";
+    header.textContent = "Solución por el algoritmo de Dijkstra";
+    div.append(header);
+    div.className = "flex flex-col gap-2";
+    div.id = "prim-solution";
+    solutionsDiv.append(div);
+    const newCanvas = document.createElement("canvas");
+    newCanvas.classList.add("bg-background");
+    newCanvas.classList.add("rounded-xl");
+    newCanvas.setAttribute("width", "1100");
+    newCanvas.setAttribute("height", "600");
+    newCanvas.id = "prim-canvas";
+    div.append(newCanvas);
+    const newNodes = [];
+    const newLinks = [];
+    // dijkstraSolution me da algo asi:
+    // path: ["2", "3", "end"]
+    // La idea es adaptarlo para crear nodos y links en base a eso.
+    // Se leeria algo asi: De lastTwoAcceptStates[0] (es el comienzo) a "2", luego a "3" y finalmente al "end" que es lastTwoAcceptStates[1]. La idea seria mapearlo algo asi:
+    // {src: lastTwoAcceptStates[0], dest: "2", weight: 5}, {src: "2", dest: "3", weight: 4}, {src: "3", dest: "end", weight: 3}
+    // Y luego crear los nodos y links en base a eso.
+
+    const startNodePosition = nodes.find(
+      (node) => node.text === lastTwoAcceptStates[0].text,
+    );
+
+    // Crea un nuevo nodo para el nodo inicial y añádelo a newNodes
+    const startNode = new Node(startNodePosition.x, startNodePosition.y);
+    startNode.text = lastTwoAcceptStates[0].text;
+    newNodes.push(startNode);
+
+    dijkstraSolution.path.map((node, index) => {
+      if (index === dijkstraSolution.path.length - 1) return;
+      // if (index === 1) {
+      //   let destNodeFromFirst = newNodes.find((node) => node.text === node);
+      //   let nLink = new Link(newNodes[0], newNodes[1]);
+      //   console.log(node, graph);
+      //   nLink.text = graph["start"][node].toString();
+      //   newLinks.push(nLink);
+      // }
+
+      const src = node;
+      let dest = dijkstraSolution.path[index + 1];
+      const weight = graph[src][dest];
+      if (dest === "end") {
+        dest = lastTwoAcceptStates[1].text;
+      }
+      const oldNodePosition = nodes.find((node) => node.text === src);
+      const oldNodeDestPosition = nodes.find((node) => node.text === dest);
+      const nodeA = new Node(oldNodePosition.x, oldNodePosition.y);
+      nodeA.text = src;
+      const nodeB = new Node(oldNodeDestPosition.x, oldNodeDestPosition.y);
+      nodeB.text = dest;
+      newNodes.push(nodeA);
+      newNodes.push(nodeB);
+      const link = new Link(nodeA, nodeB);
+      link.text = weight.toString();
+      newLinks.push(link);
+    });
+
     drawPrimSolution(newCanvas.getContext("2d"), newNodes, newLinks);
   }
 });

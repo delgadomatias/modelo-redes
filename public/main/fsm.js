@@ -1552,14 +1552,14 @@ resolveButton.addEventListener("click", () => {
     // {src: lastTwoAcceptStates[0], dest: "2", weight: 5}, {src: "2", dest: "3", weight: 4}, {src: "3", dest: "end", weight: 3}
     // Y luego crear los nodos y links en base a eso.
 
-    const startNodePosition = nodes.find(
-      (node) => node.text === lastTwoAcceptStates[0].text,
-    );
-
-    // Crea un nuevo nodo para el nodo inicial y añádelo a newNodes
-    const startNode = new Node(startNodePosition.x, startNodePosition.y);
-    startNode.text = lastTwoAcceptStates[0].text;
-    newNodes.push(startNode);
+    // const startNodePosition = nodes.find(
+    //   (node) => node.text === lastTwoAcceptStates[0].text,
+    // );
+    //
+    // // Crea un nuevo nodo para el nodo inicial y añádelo a newNodes
+    // const startNode = new Node(startNodePosition.x, startNodePosition.y);
+    // startNode.text = lastTwoAcceptStates[0].text;
+    // newNodes.push(startNode);
 
     dijkstraSolution.path.map((node, index) => {
       if (index === dijkstraSolution.path.length - 1) return;

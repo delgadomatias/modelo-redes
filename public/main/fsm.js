@@ -129,7 +129,7 @@ function resetCaret() {
 }
 
 var canvas;
-var nodeRadius = 30;
+var nodeRadius = 25;
 var nodes = [];
 var links = [];
 
@@ -149,13 +149,39 @@ function drawUsing(c) {
   for (var i = 0; i < nodes.length; i++) {
     c.lineWidth = 1.5;
     c.fillStyle = c.strokeStyle =
-      nodes[i] == selectedObject ? "#006FEE" : "black";
+      nodes[i] == selectedObject ? "#ff5924" : "black";
     nodes[i].draw(c);
   }
   for (var i = 0; i < links.length; i++) {
     c.lineWidth = 1.5;
     c.fillStyle = c.strokeStyle =
-      links[i] == selectedObject ? "#006FEE" : "black";
+      links[i] == selectedObject ? "#ff5924" : "black";
+    links[i].draw(c);
+  }
+  if (currentLink != null) {
+    c.lineWidth = 1.5;
+    c.fillStyle = c.strokeStyle = "black";
+    currentLink.draw(c);
+  }
+
+  c.restore();
+}
+
+function drawPrimSolution(c, nodes, links) {
+  c.clearRect(0, 0, canvas.width, canvas.height);
+  c.save();
+  c.translate(0.5, 0.5);
+
+  for (var i = 0; i < nodes.length; i++) {
+    c.lineWidth = 1.5;
+    c.fillStyle = c.strokeStyle =
+      nodes[i] == selectedObject ? "#ff5924" : "black";
+    nodes[i].draw(c);
+  }
+  for (var i = 0; i < links.length; i++) {
+    c.lineWidth = 1.5;
+    c.fillStyle = c.strokeStyle =
+      links[i] == selectedObject ? "#ff5924" : "black";
     links[i].draw(c);
   }
   if (currentLink != null) {
@@ -788,19 +814,19 @@ Link.prototype.draw = function (c) {
   c.stroke();
   // draw the head of the arrow
   if (stuff.hasCircle) {
-    drawArrow(
-      c,
-      stuff.endX,
-      stuff.endY,
-      stuff.endAngle - stuff.reverseScale * (Math.PI / 2),
-    );
+    // drawArrow(
+    //   c,
+    //   stuff.endX,
+    //   stuff.endY,
+    //   stuff.endAngle - stuff.reverseScale * (Math.PI / 2),
+    // );
   } else {
-    drawArrow(
-      c,
-      stuff.endX,
-      stuff.endY,
-      Math.atan2(stuff.endY - stuff.startY, stuff.endX - stuff.startX),
-    );
+    // drawArrow(
+    //   c,
+    //   stuff.endX,
+    //   stuff.endY,
+    //   Math.atan2(stuff.endY - stuff.startY, stuff.endX - stuff.startX),
+    // );
   }
   // draw the text
   if (stuff.hasCircle) {
@@ -1077,8 +1103,8 @@ class PriorityQueue {
 
 class Graph {
   constructor() {
-    this.edges = {}; // Usamos un objeto para almacenar las aristas
-    this.visited = {}; // Usamos un objeto para llevar el registro de visitados
+    this.edges = {};
+    this.visited = {};
   }
 
   addEdge(src, dest, weight) {
@@ -1151,34 +1177,99 @@ class Graph {
 function onReset() {
   nodes = [];
   links = [];
+  document.querySelector("#solutions-div").innerHTML = "";
   draw();
 }
 
+let mstPrimSolution = [];
+
 function resolveByPrim() {
+  // First, adapt the Edges for the solution
   const edges = links.map((link) => {
     return {
-      src: parseInt(link.nodeA.text),
-      dest: parseInt(link.nodeB.text),
+      src: link.nodeA.text,
+      dest: link.nodeB.text,
       weight: parseFloat(link.text),
     };
   });
 
-  edges.sort((a, b) => a.src - b.src || a.dest - b.dest);
-
-  const g = new Graph(7);
+  // Then, add the edges to the graph
+  const g = new Graph(nodes.length);
   edges.map((edge) => {
     const { src, dest, weight } = edge;
     g.addEdge(src, dest, weight);
   });
-  const mst = g.primsMST();
-  const totalWeight = mst.reduce((acc, { weight }) => acc + weight, 0);
-  mst.map((edge) => {
-    console.log(`From: ${edge.src} to: ${edge.dest}`);
-  });
-  console.log(`Total weight: ${totalWeight}`);
+
+  // Finally, resolve the MST
+  mstPrimSolution = g.primsMST();
 }
 
 const resetButton = document.querySelector("#reset-btn");
-const resolveByPrimBtn = document.querySelector("#resolve-by-prim-btn");
 resetButton.addEventListener("click", onReset);
-resolveByPrimBtn.addEventListener("click", resolveByPrim);
+
+let resolveBy = [];
+
+const primOption = document.querySelector("#Prim-option input");
+const kruskalOption = document.querySelector("#Kruskal-option input");
+const dijkstraOption = document.querySelector("#Dijkstra-option input");
+
+primOption.addEventListener("click", (e) => {
+  const isChecked = e.target.checked;
+  if (isChecked) {
+    return resolveBy.push("Prim");
+  }
+
+  resolveBy = resolveBy.filter((resolve) => resolve !== "Prim");
+});
+
+kruskalOption.addEventListener("click", (e) => {
+  const isChecked = e.target.checked;
+  if (isChecked) {
+    return resolveBy.push("Kruskal");
+  }
+
+  resolveBy = resolveBy.filter((resolve) => resolve !== "Kruskal");
+});
+
+dijkstraOption.addEventListener("click", (e) => {
+  const isChecked = e.target.checked;
+  if (isChecked) {
+    return resolveBy.push("Dijkstra");
+  }
+
+  resolveBy = resolveBy.filter((resolve) => resolve !== "Dijkstra");
+});
+
+const resolveButton = document.querySelector("#resolve");
+const solutionsDiv = document.querySelector("#solutions-div");
+
+resolveButton.addEventListener("click", () => {
+  if (resolveBy.includes("Prim")) {
+    resolveByPrim();
+    solutionsDiv.innerHTML = "";
+    const newCanvas = document.createElement("canvas");
+    newCanvas.classList.add("bg-background");
+    newCanvas.classList.add("rounded-xl");
+    newCanvas.setAttribute("width", "1100");
+    newCanvas.setAttribute("height", "600");
+    newCanvas.id = "prim-canvas";
+    solutionsDiv.append(newCanvas);
+    const newNodes = [];
+    const newLinks = [];
+    mstPrimSolution.map((node) => {
+      const { src, dest, weight } = node;
+      const oldNodePosition = nodes.find((node) => node.text === src);
+      const oldNodeDestPosition = nodes.find((node) => node.text === dest);
+      const nodeA = new Node(oldNodePosition.x, oldNodePosition.y);
+      nodeA.text = src;
+      const nodeB = new Node(oldNodeDestPosition.x, oldNodeDestPosition.y);
+      nodeB.text = dest;
+      newNodes.push(nodeA);
+      newNodes.push(nodeB);
+      const link = new Link(nodeA, nodeB);
+      link.text = weight.toString();
+      newLinks.push(link);
+    });
+    drawPrimSolution(newCanvas.getContext("2d"), newNodes, newLinks);
+  }
+});

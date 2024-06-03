@@ -84,7 +84,7 @@ function canvasHasFocus() {
 
 function drawText(c, originalText, x, y, angleOrNull, isSelected) {
   text = convertLatexShortcuts(originalText);
-  c.font = '20px "Times New Roman", serif';
+  c.font = '20px "Inter", serif';
   var width = c.measureText(text).width;
 
   // center the text
@@ -153,20 +153,20 @@ function drawUsing(c) {
   c.translate(0.5, 0.5);
 
   for (var i = 0; i < nodes.length; i++) {
-    c.lineWidth = 1.5;
+    c.lineWidth = 1.7;
     c.fillStyle = c.strokeStyle =
-      nodes[i] == selectedObject ? "#ff5924" : "black";
+      nodes[i] == selectedObject ? "#ff5924" : "white";
     nodes[i].draw(c);
   }
   for (var i = 0; i < links.length; i++) {
-    c.lineWidth = 1.5;
+    c.lineWidth = 1.7;
     c.fillStyle = c.strokeStyle =
-      links[i] == selectedObject ? "#ff5924" : "black";
+      links[i] == selectedObject ? "#ff5924" : "white";
     links[i].draw(c);
   }
   if (currentLink != null) {
-    c.lineWidth = 1.5;
-    c.fillStyle = c.strokeStyle = "black";
+    c.lineWidth = 1.7;
+    c.fillStyle = c.strokeStyle = "white";
     currentLink.draw(c);
   }
 
@@ -179,20 +179,20 @@ function drawPrimSolution(c, nodes, links) {
   c.translate(0.5, 0.5);
 
   for (var i = 0; i < nodes.length; i++) {
-    c.lineWidth = 1.5;
+    c.lineWidth = 1.7;
     c.fillStyle = c.strokeStyle =
-      nodes[i] == selectedObject ? "#ff5924" : "black";
+      nodes[i] == selectedObject ? "#ff5924" : "white";
     nodes[i].draw(c);
   }
   for (var i = 0; i < links.length; i++) {
-    c.lineWidth = 1.5;
+    c.lineWidth = 1.7;
     c.fillStyle = c.strokeStyle =
-      links[i] == selectedObject ? "#ff5924" : "black";
+      links[i] == selectedObject ? "#ff5924" : "white";
     links[i].draw(c);
   }
   if (currentLink != null) {
-    c.lineWidth = 1.5;
-    c.fillStyle = c.strokeStyle = "black";
+    c.lineWidth = 1.7;
+    c.fillStyle = c.strokeStyle = "white";
     currentLink.draw(c);
   }
 
@@ -1433,6 +1433,23 @@ resolveButton.addEventListener("click", () => {
   const existentKruskalSolution = document.querySelector("#kruskal-solution");
   const existentDijkstraSolution = document.querySelector("#dijkstra-solution");
 
+  if (resolveBy.length === 0) {
+    if (existentPrimSolution) {
+      existentPrimSolution.remove();
+    }
+
+    if (existentKruskalSolution) {
+        existentKruskalSolution.remove();
+    }
+
+    if (existentDijkstraSolution) {
+        existentDijkstraSolution.remove()
+    }
+
+    return
+  }
+
+
   if (!resolveBy.includes("Prim") && existentPrimSolution) {
     existentPrimSolution.remove();
   }
@@ -1458,7 +1475,7 @@ resolveButton.addEventListener("click", () => {
     div.id = "prim-solution";
     solutionsDiv.append(div);
     const newCanvas = document.createElement("canvas");
-    newCanvas.classList.add("bg-background");
+    newCanvas.classList.add("bg-[#0b0b0f]");
     newCanvas.classList.add("rounded-xl");
     newCanvas.setAttribute("width", "1100");
     newCanvas.setAttribute("height", "600");
@@ -1497,7 +1514,7 @@ resolveButton.addEventListener("click", () => {
     div.className = "flex flex-col gap-2";
     solutionsDiv.append(div);
     const newCanvas = document.createElement("canvas");
-    newCanvas.classList.add("bg-background");
+    newCanvas.classList.add("bg-[#0b0b0f]");
     newCanvas.classList.add("rounded-xl");
     newCanvas.setAttribute("width", "1100");
     newCanvas.setAttribute("height", "600");
@@ -1534,10 +1551,10 @@ resolveButton.addEventListener("click", () => {
     header.textContent = "Solución por el algoritmo de Dijkstra";
     div.append(header);
     div.className = "flex flex-col gap-2";
-    div.id = "prim-solution";
+    div.id = "dijkstra-solution";
     solutionsDiv.append(div);
     const newCanvas = document.createElement("canvas");
-    newCanvas.classList.add("bg-background");
+    newCanvas.classList.add("bg-[#0b0b0f]");
     newCanvas.classList.add("rounded-xl");
     newCanvas.setAttribute("width", "1100");
     newCanvas.setAttribute("height", "600");
@@ -1592,4 +1609,14 @@ resolveButton.addEventListener("click", () => {
 
     drawPrimSolution(newCanvas.getContext("2d"), newNodes, newLinks);
   }
+
+  // Scroll into view
+  let offset = 45;
+  let elementPosition = solutionsDiv.getBoundingClientRect().top;
+  let offsetPosition = elementPosition + window.pageYOffset - offset;
+  window.scrollTo({
+    top: offsetPosition,
+    behavior: "smooth",
+  })
+
 });

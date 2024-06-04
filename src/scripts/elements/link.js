@@ -4,7 +4,7 @@ import {
   nodeRadius,
   selectedObject,
   snapToPadding,
-} from "../index.js";
+} from "../index-dos.js";
 import { circleFromThreePoints } from "../utils/index.js";
 
 export class Link {
@@ -145,8 +145,8 @@ export class Link {
     drawText(
       c,
       this.textStart,
-      startCoords.x,
-      startCoords.y,
+      startCoords.x + 20,
+      startCoords.y + 15,
       null,
       this === selectedObject,
     );
@@ -159,39 +159,39 @@ export class Link {
     drawText(
       c,
       this.textEnd,
-      endCoords.x,
-      endCoords.y,
+      endCoords.x - 20,
+      endCoords.y + 15,
       null,
       this === selectedObject,
     );
 
-    // draw the text
-    if (stuff.hasCircle) {
-      const startAngle = stuff.startAngle;
-      let endAngle = stuff.endAngle;
-      if (endAngle < startAngle) {
-        endAngle += Math.PI * 2;
-      }
-      textAngle = (startAngle + endAngle) / 2 + stuff.isReversed * Math.PI;
-      textX = stuff.circleX + stuff.circleRadius * Math.cos(textAngle);
-      textY = stuff.circleY + stuff.circleRadius * Math.sin(textAngle);
-      drawText(c, this.text, textX, textY, textAngle, selectedObject === this);
-    } else {
-      textX = (stuff.startX + stuff.endX) / 2;
-      textY = (stuff.startY + stuff.endY) / 2;
-      textAngle = Math.atan2(
-        stuff.endX - stuff.startX,
-        stuff.startY - stuff.endY,
-      );
-      drawText(
-        c,
-        this.text,
-        textX,
-        textY,
-        textAngle + this.lineAngleAdjust,
-        selectedObject === this,
-      );
-    }
+    // // draw the text
+    // if (stuff.hasCircle) {
+    //   const startAngle = stuff.startAngle;
+    //   let endAngle = stuff.endAngle;
+    //   if (endAngle < startAngle) {
+    //     endAngle += Math.PI * 2;
+    //   }
+    //   textAngle = (startAngle + endAngle) / 2 + stuff.isReversed * Math.PI;
+    //   textX = stuff.circleX + stuff.circleRadius * Math.cos(textAngle);
+    //   textY = stuff.circleY + stuff.circleRadius * Math.sin(textAngle);
+    //   drawText(c, this.text, textX, textY, textAngle, selectedObject === this);
+    // } else {
+    //   textX = (stuff.startX + stuff.endX) / 2;
+    //   textY = (stuff.startY + stuff.endY) / 2;
+    //   textAngle = Math.atan2(
+    //     stuff.endX - stuff.startX,
+    //     stuff.startY - stuff.endY,
+    //   );
+    //   drawText(
+    //     c,
+    //     this.text,
+    //     textX,
+    //     textY,
+    //     textAngle + this.lineAngleAdjust,
+    //     selectedObject === this,
+    //   );
+    // }
   }
 
   containsPoint(x, y) {

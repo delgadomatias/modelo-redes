@@ -1,4 +1,4 @@
-import { drawText, nodeRadius, selectedObject } from "../index.js";
+import { drawText, nodeRadius, selectedObject } from "../index-dos.js";
 
 export class Node {
   constructor(x, y) {

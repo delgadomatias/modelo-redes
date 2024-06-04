@@ -24,6 +24,7 @@ let key;
 let mouse;
 let targetNode;
 export let acceptedNodes = [];
+export let editingEndText = false;
 
 function canvasHasFocus() {
   return (document.activeElement || document.body) === document.body;
@@ -305,6 +306,10 @@ window.onload = function () {
       }
 
       draw();
+    } else if (selectedObject instanceof Link) {
+      // Alternar entre editar el texto de inicio o el texto de fin
+      editingEndText = !editingEndText;
+      resetCaret();
     }
   };
 
@@ -381,6 +386,14 @@ document.onkeydown = function (e) {
       );
       resetCaret();
       draw();
+    } else if (selectedObject instanceof Link) {
+      if (editingEndText) {
+        selectedObject.textEnd = selectedObject.textEnd.slice(0, -1);
+      } else {
+        selectedObject.textStart = selectedObject.textStart.slice(0, -1);
+      }
+      resetCaret();
+      draw();
     }
 
     // backspace is a shortcut for the back button, but do NOT want to change pages
@@ -432,7 +445,7 @@ document.addEventListener("keypress", (e) => {
     selectedObject != null
   ) {
     if (selectedObject instanceof Link) {
-      if (shift) {
+      if (editingEndText) {
         // Editar el texto en el final de la relación
         selectedObject.textEnd += String.fromCharCode(key);
       } else {
@@ -449,7 +462,6 @@ document.addEventListener("keypress", (e) => {
       return false;
     }
   } else if (key === 8) {
-    // Evitar que la tecla de retroceso (backspace) realice su acción predeterminada
     return false;
   }
 });

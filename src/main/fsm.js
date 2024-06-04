@@ -1,5 +1,24 @@
-var lastTwoAcceptStates = [];
-var greekLetterNames = [
+import {Graph} from "../algorithms/prim.js";
+import {WeightedGraph} from "../algorithms/dijkstra.js";
+
+let canvas;
+const nodeRadius = 25;
+let nodes = [];
+let links = [];
+let cursorVisible = true;
+let caretTimer;
+let snapToPadding = 6; // pixels
+let hitTargetPadding = 6; // pixels
+let selectedObject = null; // either a Link or a Node
+let currentLink = null; // a Link
+let movingObject = false;
+let originalClick;
+let text;
+let deltaMouseY;
+let deltaMouseX;
+let caretVisible;
+let lastTwoAcceptStates = [];
+let greekLetterNames = [
   "alpha",
   "beta",
   "gamma",
@@ -27,9 +46,10 @@ var greekLetterNames = [
 ];
 
 function convertLatexShortcuts(text) {
+  let i;
   // html greek characters
-  for (var i = 0; i < greekLetterNames.length; i++) {
-    var name = greekLetterNames[i];
+  for (i = 0; i < greekLetterNames.length; i++) {
+    const name = greekLetterNames[i];
     text = text.replace(
       new RegExp("\\\\" + name, "g"),
       String.fromCharCode(913 + i + (i > 16)),
@@ -41,7 +61,7 @@ function convertLatexShortcuts(text) {
   }
 
   // subscripts
-  for (var i = 0; i < 10; i++) {
+  for (i = 0; i < 10; i++) {
     text = text.replace(
       new RegExp("_" + i, "g"),
       String.fromCharCode(8320 + i),
@@ -50,27 +70,9 @@ function convertLatexShortcuts(text) {
 
   return text;
 }
-
-function textToXML(text) {
-  text = text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-  var result = "";
-  for (var i = 0; i < text.length; i++) {
-    var c = text.charCodeAt(i);
-    if (c >= 0x20 && c <= 0x7e) {
-      result += text[i];
-    } else {
-      result += "&#" + c + ";";
-    }
-  }
-  return result;
-}
-
 function drawArrow(c, x, y, angle) {
-  var dx = Math.cos(angle);
-  var dy = Math.sin(angle);
+  const dx = Math.cos(angle);
+  const dy = Math.sin(angle);
   c.beginPath();
   c.moveTo(x, y);
   c.lineTo(x - 8 * dx + 5 * dy, y - 8 * dy - 5 * dx);
@@ -79,24 +81,24 @@ function drawArrow(c, x, y, angle) {
 }
 
 function canvasHasFocus() {
-  return (document.activeElement || document.body) == document.body;
+  return (document.activeElement || document.body) === document.body;
 }
 
 function drawText(c, originalText, x, y, angleOrNull, isSelected) {
   text = convertLatexShortcuts(originalText);
   c.font = '20px "Inter", serif';
-  var width = c.measureText(text).width;
+  const width = c.measureText(text).width;
 
   // center the text
   x -= width / 2;
 
   // position the text intelligently if given an angle
   if (angleOrNull != null) {
-    var cos = Math.cos(angleOrNull);
-    var sin = Math.sin(angleOrNull);
-    var cornerPointX = (width / 2 + 5) * (cos > 0 ? 1 : -1);
-    var cornerPointY = (10 + 5) * (sin > 0 ? 1 : -1);
-    var slide =
+    const cos = Math.cos(angleOrNull);
+    const sin = Math.sin(angleOrNull);
+    const cornerPointX = (width / 2 + 5) * (cos > 0 ? 1 : -1);
+    const cornerPointY = (10 + 5) * (sin > 0 ? 1 : -1);
+    const slide =
       sin * Math.pow(Math.abs(sin), 40) * cornerPointX -
       cos * Math.pow(Math.abs(cos), 10) * cornerPointY;
     x += cornerPointX - sin * slide;
@@ -120,76 +122,37 @@ function drawText(c, originalText, x, y, angleOrNull, isSelected) {
   }
 }
 
-var caretTimer;
-var caretVisible = true;
-
 function resetCaret() {
   clearInterval(caretTimer);
-  caretTimer = setInterval("caretVisible = !caretVisible; draw()", 500);
+  caretVisible = !caretVisible;
+  caretTimer = setInterval(() => draw(), 500);
   caretVisible = true;
 }
 
-var canvas;
-var nodeRadius = 25;
-var nodes = [];
-var links = [];
-
-var cursorVisible = true;
-var snapToPadding = 6; // pixels
-var hitTargetPadding = 6; // pixels
-var selectedObject = null; // either a Link or a Node
-var currentLink = null; // a Link
-var movingObject = false;
-var originalClick;
-
 function drawUsing(c) {
-  c.clearRect(
-    0,
-    0,
-    canvas.getBoundingClientRect().width,
-    canvas.getBoundingClientRect().height,
-  );
-  c.save();
-  c.translate(0.5, 0.5);
-
-  for (var i = 0; i < nodes.length; i++) {
-    c.lineWidth = 1.7;
-    c.fillStyle = c.strokeStyle =
-      nodes[i] == selectedObject ? "#ff5924" : "white";
-    nodes[i].draw(c);
-  }
-  for (var i = 0; i < links.length; i++) {
-    c.lineWidth = 1.7;
-    c.fillStyle = c.strokeStyle =
-      links[i] == selectedObject ? "#ff5924" : "white";
-    links[i].draw(c);
-  }
-  if (currentLink != null) {
-    c.lineWidth = 1.7;
-    c.fillStyle = c.strokeStyle = "white";
-    currentLink.draw(c);
-  }
-
-  c.restore();
+  drawOnCanvas(c, nodes, links);
 }
 
-function drawPrimSolution(c, nodes, links) {
+function drawOnCanvas(c, nodes, links) {
+  let i;
   c.clearRect(0, 0, canvas.width, canvas.height);
   c.save();
   c.translate(0.5, 0.5);
 
-  for (var i = 0; i < nodes.length; i++) {
+  for (i = 0; i < nodes.length; i++) {
     c.lineWidth = 1.7;
     c.fillStyle = c.strokeStyle =
-      nodes[i] == selectedObject ? "#ff5924" : "white";
+      nodes[i] === selectedObject ? "#ff5924" : "white";
     nodes[i].draw(c);
   }
-  for (var i = 0; i < links.length; i++) {
+
+  for (i = 0; i < links.length; i++) {
     c.lineWidth = 1.7;
     c.fillStyle = c.strokeStyle =
-      links[i] == selectedObject ? "#ff5924" : "white";
+      links[i] === selectedObject ? "#ff5924" : "white";
     links[i].draw(c);
   }
+
   if (currentLink != null) {
     c.lineWidth = 1.7;
     c.fillStyle = c.strokeStyle = "white";
@@ -197,6 +160,10 @@ function drawPrimSolution(c, nodes, links) {
   }
 
   c.restore();
+}
+
+function drawSolution(c, nodes, links) {
+  drawOnCanvas(c, nodes, links);
 }
 
 function draw() {
@@ -205,12 +172,13 @@ function draw() {
 }
 
 function selectObject(x, y) {
-  for (var i = 0; i < nodes.length; i++) {
+  let i;
+  for (i = 0; i < nodes.length; i++) {
     if (nodes[i].containsPoint(x, y)) {
       return nodes[i];
     }
   }
-  for (var i = 0; i < links.length; i++) {
+  for (i = 0; i < links.length; i++) {
     if (links[i].containsPoint(x, y)) {
       return links[i];
     }
@@ -219,8 +187,8 @@ function selectObject(x, y) {
 }
 
 function snapNode(node) {
-  for (var i = 0; i < nodes.length; i++) {
-    if (nodes[i] == node) continue;
+  for (let i = 0; i < nodes.length; i++) {
+    if (nodes[i] === node) continue;
 
     if (Math.abs(node.x - nodes[i].x) < snapToPadding) {
       node.x = nodes[i].x;
@@ -232,6 +200,7 @@ function snapNode(node) {
   }
 }
 
+let shift;
 window.onload = function () {
   canvas = document.getElementById("canvas");
   canvas.width = canvas.offsetWidth;
@@ -240,7 +209,7 @@ window.onload = function () {
   draw();
 
   canvas.onmousedown = function (e) {
-    var mouse = crossBrowserRelativeMousePos(e);
+    const mouse = crossBrowserRelativeMousePos(e);
     selectedObject = selectObject(mouse.x, mouse.y);
     movingObject = false;
     originalClick = mouse;
@@ -273,7 +242,7 @@ window.onload = function () {
   };
 
   canvas.ondblclick = function (e) {
-    var mouse = crossBrowserRelativeMousePos(e);
+    const mouse = crossBrowserRelativeMousePos(e);
     selectedObject = selectObject(mouse.x, mouse.y);
 
     if (selectedObject == null) {
@@ -302,10 +271,10 @@ window.onload = function () {
   };
 
   canvas.onmousemove = function (e) {
-    var mouse = crossBrowserRelativeMousePos(e);
+    const mouse = crossBrowserRelativeMousePos(e);
 
     if (currentLink != null) {
-      var targetNode = selectObject(mouse.x, mouse.y);
+      let targetNode = selectObject(mouse.x, mouse.y);
       if (!(targetNode instanceof Node)) {
         targetNode = null;
       }
@@ -317,7 +286,7 @@ window.onload = function () {
           currentLink = new TemporaryLink(originalClick, mouse);
         }
       } else {
-        if (targetNode == selectedObject) {
+        if (targetNode === selectedObject) {
           currentLink = new SelfLink(selectedObject, mouse);
         } else if (targetNode != null) {
           currentLink = new Link(selectedObject, targetNode);
@@ -340,7 +309,7 @@ window.onload = function () {
     }
   };
 
-  canvas.onmouseup = function (e) {
+  canvas.onmouseup = function () {
     movingObject = false;
 
     if (currentLink != null) {
@@ -355,17 +324,17 @@ window.onload = function () {
   };
 };
 
-var shift = false;
+shift = false;
 
 document.onkeydown = function (e) {
-  var key = crossBrowserKey(e);
+  const key = crossBrowserKey(e);
 
-  if (key == 16) {
+  if (key === 16) {
     shift = true;
   } else if (!canvasHasFocus()) {
     // don't read keystrokes when other things have focus
     return true;
-  } else if (key == 8) {
+  } else if (key === 8) {
     // backspace key
     if (selectedObject != null && "text" in selectedObject) {
       selectedObject.text = selectedObject.text.substr(
@@ -378,20 +347,21 @@ document.onkeydown = function (e) {
 
     // backspace is a shortcut for the back button, but do NOT want to change pages
     return false;
-  } else if (key == 46) {
+  } else if (key === 46) {
     // delete key
     if (selectedObject != null) {
-      for (var i = 0; i < nodes.length; i++) {
-        if (nodes[i] == selectedObject) {
+      let i;
+      for (i = 0; i < nodes.length; i++) {
+        if (nodes[i] === selectedObject) {
           nodes.splice(i--, 1);
         }
       }
-      for (var i = 0; i < links.length; i++) {
+      for (i = 0; i < links.length; i++) {
         if (
-          links[i] == selectedObject ||
-          links[i].node == selectedObject ||
-          links[i].nodeA == selectedObject ||
-          links[i].nodeB == selectedObject
+          links[i] === selectedObject ||
+          links[i].node === selectedObject ||
+          links[i].nodeA === selectedObject ||
+          links[i].nodeB === selectedObject
         ) {
           links.splice(i--, 1);
         }
@@ -403,16 +373,16 @@ document.onkeydown = function (e) {
 };
 
 document.onkeyup = function (e) {
-  var key = crossBrowserKey(e);
+  const key = crossBrowserKey(e);
 
-  if (key == 16) {
+  if (key === 16) {
     shift = false;
   }
 };
 
 document.onkeypress = function (e) {
   // don't read keystrokes when other things have focus
-  var key = crossBrowserKey(e);
+  const key = crossBrowserKey(e);
   if (!canvasHasFocus()) {
     // don't read keystrokes when other things have focus
     return true;
@@ -431,7 +401,7 @@ document.onkeypress = function (e) {
 
     // don't let keys do their actions (like space scrolls down the page)
     return false;
-  } else if (key == 8) {
+  } else if (key === 8) {
     // backspace is a shortcut for the back button, but do NOT want to change pages
     return false;
   }
@@ -444,8 +414,8 @@ function crossBrowserKey(e) {
 
 function crossBrowserElementPos(e) {
   e = e || window.event;
-  var obj = e.target || e.srcElement;
-  var x = 0,
+  let obj = e.target || e.srcElement;
+  let x = 0,
     y = 0;
   while (obj.offsetParent) {
     x += obj.offsetLeft;
@@ -470,8 +440,8 @@ function crossBrowserMousePos(e) {
 }
 
 function crossBrowserRelativeMousePos(e) {
-  var element = crossBrowserElementPos(e);
-  var mouse = crossBrowserMousePos(e);
+  const element = crossBrowserElementPos(e);
+  const mouse = crossBrowserMousePos(e);
   return {
     x: mouse.x - element.x,
     y: mouse.y - element.y,
@@ -479,7 +449,7 @@ function crossBrowserRelativeMousePos(e) {
 }
 
 function output(text) {
-  var element = document.getElementById("output");
+  const element = document.getElementById("output");
   element.style.display = "block";
   element.value = text;
 }
@@ -521,11 +491,12 @@ function restoreBackup() {
   }
 
   try {
-    var backup = JSON.parse(localStorage["fsm"]);
+    let i;
+    const backup = JSON.parse(localStorage["fsm"]);
 
-    for (var i = 0; i < backup.nodes.length; i++) {
-      var backupNode = backup.nodes[i];
-      var node = new Node(backupNode.x, backupNode.y);
+    for (i = 0; i < backup.nodes.length; i++) {
+      const backupNode = backup.nodes[i];
+      const node = new Node(backupNode.x, backupNode.y);
       node.isAcceptState = backupNode.isAcceptState;
       node.text = backupNode.text;
       nodes.push(node);
@@ -538,19 +509,19 @@ function restoreBackup() {
         lastTwoAcceptStates.push(node);
       }
     }
-    for (var i = 0; i < backup.links.length; i++) {
-      var backupLink = backup.links[i];
-      var link = null;
-      if (backupLink.type == "SelfLink") {
+    for (i = 0; i < backup.links.length; i++) {
+      const backupLink = backup.links[i];
+      let link = null;
+      if (backupLink.type === "SelfLink") {
         link = new SelfLink(nodes[backupLink.node]);
         link.anchorAngle = backupLink.anchorAngle;
         link.text = backupLink.text;
-      } else if (backupLink.type == "StartLink") {
+      } else if (backupLink.type === "StartLink") {
         link = new StartLink(nodes[backupLink.node]);
         link.deltaX = backupLink.deltaX;
         link.deltaY = backupLink.deltaY;
         link.text = backupLink.text;
-      } else if (backupLink.type == "Link") {
+      } else if (backupLink.type === "Link") {
         link = new Link(nodes[backupLink.nodeA], nodes[backupLink.nodeB]);
         link.parallelPart = backupLink.parallelPart;
         link.perpendicularPart = backupLink.perpendicularPart;
@@ -567,17 +538,18 @@ function restoreBackup() {
 }
 
 function saveBackup() {
+  let i;
   if (!localStorage || !JSON) {
     return;
   }
 
-  var backup = {
+  const backup = {
     nodes: [],
     links: [],
   };
-  for (var i = 0; i < nodes.length; i++) {
-    var node = nodes[i];
-    var backupNode = {
+  for (i = 0; i < nodes.length; i++) {
+    const node = nodes[i];
+    const backupNode = {
       x: node.x,
       y: node.y,
       text: node.text,
@@ -585,9 +557,9 @@ function saveBackup() {
     };
     backup.nodes.push(backupNode);
   }
-  for (var i = 0; i < links.length; i++) {
-    var link = links[i];
-    var backupLink = null;
+  for (i = 0; i < links.length; i++) {
+    const link = links[i];
+    let backupLink = null;
     if (link instanceof SelfLink) {
       backupLink = {
         type: "SelfLink",
@@ -627,8 +599,8 @@ function det(a, b, c, d, e, f, g, h, i) {
 }
 
 function circleFromThreePoints(x1, y1, x2, y2, x3, y3) {
-  var a = det(x1, y1, 1, x2, y2, 1, x3, y3, 1);
-  var bx = -det(
+  const a = det(x1, y1, 1, x2, y2, 1, x3, y3, 1);
+  const bx = -det(
     x1 * x1 + y1 * y1,
     y1,
     1,
@@ -639,7 +611,7 @@ function circleFromThreePoints(x1, y1, x2, y2, x3, y3) {
     y3,
     1,
   );
-  var by = det(
+  const by = det(
     x1 * x1 + y1 * y1,
     x1,
     1,
@@ -650,7 +622,7 @@ function circleFromThreePoints(x1, y1, x2, y2, x3, y3) {
     x3,
     1,
   );
-  var c = -det(
+  const c = -det(
     x1 * x1 + y1 * y1,
     x1,
     y1,
@@ -666,10 +638,6 @@ function circleFromThreePoints(x1, y1, x2, y2, x3, y3) {
     y: -by / (2 * a),
     radius: Math.sqrt(bx * bx + by * by - 4 * a * c) / (2 * Math.abs(a)),
   };
-}
-
-function fixed(number, digits) {
-  return number.toFixed(digits).replace(/0+$/, "").replace(/\.$/, "");
 }
 
 class Node {
@@ -699,7 +667,7 @@ class Node {
     c.stroke();
 
     // draw the text
-    drawText(c, this.text, this.x, this.y, null, selectedObject == this);
+    drawText(c, this.text, this.x, this.y, null, selectedObject === this);
 
     // draw a double circle for an accept state
     if (this.isAcceptState) {
@@ -739,9 +707,9 @@ function Link(a, b) {
 }
 
 Link.prototype.getAnchorPoint = function () {
-  var dx = this.nodeB.x - this.nodeA.x;
-  var dy = this.nodeB.y - this.nodeA.y;
-  var scale = Math.sqrt(dx * dx + dy * dy);
+  const dx = this.nodeB.x - this.nodeA.x;
+  const dy = this.nodeB.y - this.nodeA.y;
+  const scale = Math.sqrt(dx * dx + dy * dy);
   return {
     x:
       this.nodeA.x +
@@ -1108,190 +1076,6 @@ TemporaryLink.prototype.draw = function (c) {
 
 // TODO: NEW
 
-class PriorityQueue {
-  constructor() {
-    this.queue = [];
-  }
-
-  enqueue(vertex, priority) {
-    this.queue.push({ vertex, priority });
-    this.sort();
-  }
-
-  dequeue() {
-    return this.queue.shift();
-  }
-
-  sort() {
-    this.queue.sort((a, b) => a.priority - b.priority);
-  }
-
-  isEmpty() {
-    return this.queue.length === 0;
-  }
-}
-
-class Graph {
-  constructor() {
-    this.edges = {};
-    this.visited = {};
-  }
-
-  addEdge(src, dest, weight) {
-    if (!this.edges[src]) this.edges[src] = {};
-    if (!this.edges[dest]) this.edges[dest] = {};
-
-    this.edges[src][dest] = weight;
-    this.edges[dest][src] = weight; // Grafo no dirigido
-  }
-
-  findStartNode() {
-    for (const node in this.edges) {
-      if (Object.keys(this.edges[node]).length > 0) {
-        return node;
-      }
-    }
-    return null;
-  }
-
-  primsMST(startNode = null) {
-    if (!startNode) {
-      startNode = this.findStartNode();
-      if (!startNode) {
-        return []; // No hay aristas en el grafo
-      }
-    }
-
-    // Inicializar el estado del grafo
-    for (const node in this.edges) {
-      this.visited[node] = false;
-    }
-
-    this.visited[startNode] = true;
-    let pq = new PriorityQueue();
-    let result = [];
-
-    // Inicializar la cola de prioridad con las aristas del nodo de inicio
-    for (const neighbor in this.edges[startNode]) {
-      pq.enqueue(
-        { src: startNode, dest: neighbor },
-        this.edges[startNode][neighbor],
-      );
-    }
-
-    // Procesar la cola de prioridad
-    while (!pq.isEmpty()) {
-      let {
-        vertex: { src, dest },
-        priority: weight,
-      } = pq.dequeue();
-      if (!this.visited[dest]) {
-        this.visited[dest] = true;
-        result.push({ src, dest, weight });
-
-        for (const neighbor in this.edges[dest]) {
-          if (!this.visited[neighbor]) {
-            pq.enqueue(
-              { src: dest, dest: neighbor },
-              this.edges[dest][neighbor],
-            );
-          }
-        }
-      }
-    }
-
-    return result;
-  }
-}
-
-// Kruskal Implementation
-
-class UnionFind {
-  constructor(elements) {
-    this.parent = {};
-
-    elements.forEach((e) => (this.parent[e] = e));
-  }
-
-  union(a, b) {
-    this.parent[this.find(a)] = this.find(b);
-  }
-
-  find(a) {
-    while (this.parent[a] !== a) {
-      a = this.parent[a];
-    }
-
-    return a;
-  }
-
-  connected(a, b) {
-    return this.find(a) === this.find(b);
-  }
-}
-
-function kruskal(graph) {
-  graph.sort((a, b) => a.weight - b.weight);
-
-  const nodes = new Set(graph.map((e) => [e.src, e.dest]).flat());
-  const unionFind = new UnionFind(nodes);
-
-  const mst = [];
-
-  for (let edge of graph) {
-    if (!unionFind.connected(edge.src, edge.dest)) {
-      unionFind.union(edge.src, edge.dest);
-      mst.push(edge);
-    }
-  }
-
-  return mst;
-}
-
-// Dijkstra
-
-function dijkstraAlgorithm(graph) {
-  const costs = Object.assign({ end: Infinity }, graph.start);
-  const parents = { end: null };
-  const processed = [];
-
-  let node = findLowestCostNode(costs, processed);
-
-  while (node) {
-    let cost = costs[node];
-    let children = graph[node];
-    for (let n in children) {
-      let newCost = cost + children[n];
-      if (!costs[n] || costs[n] > newCost) {
-        costs[n] = newCost;
-        parents[n] = node;
-      }
-    }
-    processed.push(node);
-    node = findLowestCostNode(costs, processed);
-  }
-
-  let optimalPath = ["end"];
-  let parent = parents.end;
-  while (parent) {
-    optimalPath.push(parent);
-    parent = parents[parent];
-  }
-  optimalPath.reverse();
-  return { distance: costs.end, path: optimalPath };
-}
-
-function findLowestCostNode(costs, processed) {
-  return Object.keys(costs).reduce((lowest, node) => {
-    if (lowest === null || costs[node] < costs[lowest]) {
-      if (!processed.includes(node)) {
-        lowest = node;
-      }
-    }
-    return lowest;
-  }, null);
-}
-
 function onReset() {
   const alert = confirm("¿Estás seguro de que deseas reiniciar el grafo?");
   if (alert) {
@@ -1303,7 +1087,6 @@ function onReset() {
 }
 
 let mstPrimSolution = [];
-let mstKruskalSolution = [];
 let dijkstraSolution = [];
 
 function resolveByPrim() {
@@ -1326,67 +1109,26 @@ function resolveByPrim() {
   // Finally, resolve the MST
   mstPrimSolution = g.primsMST();
 }
-function resolveByKruskal() {
-  const edges = links.map((link) => {
-    return {
-      src: link.nodeA.text,
-      dest: link.nodeB.text,
-      weight: parseFloat(link.text),
-    };
-  });
-
-  mstKruskalSolution = kruskal(edges);
-}
 
 let graph = {};
 
 function resolveByDijkstra() {
-  //   First, adapt the input
-  //   Like this:
-  //   const graph = {
-  //     start: {A: 5, B: 2},
-  //     A: {C: 4, D: 2},
-  //     B: {A: 8, D: 7},
-  //     C: {D: 6, end: 3},
-  //     D: {end: 1},
-  //     end: {}
-  //   };
-  //   Start = accept state
-  //   End = last node with accept state
+  let dijkstraGraph = new WeightedGraph();
 
-  graph = {
-    start: {},
-    end: {},
-  };
+  // First, add the vertices to the graph
+  nodes.map((node) => {
+    dijkstraGraph.addVertex(node.text);
+  });
 
-  if (lastTwoAcceptStates.length === 2) {
-    let startNode = lastTwoAcceptStates[0];
-    // Debo encontrar las relaciones del nodo start
-    links.map((link) => {
-      if (link.nodeA.text === startNode.text) {
-        graph.start[link.nodeB.text] = parseFloat(link.text);
-      }
-    });
+  //   Then, add the edges
+  links.map((link) => {
+    const src = link.nodeA.text;
+    const dest = link.nodeB.text;
+    const weight = parseFloat(link.text);
+    dijkstraGraph.addEdge(src, dest, weight);
+  });
 
-    nodes.map((node) => {
-      if (
-        node.text !== startNode.text &&
-        node.text !== lastTwoAcceptStates[1].text
-      ) {
-        graph[node.text] = {};
-        links.map((link) => {
-          if (link.nodeA.text === node.text) {
-            if (link.nodeB.text !== lastTwoAcceptStates[1].text) {
-              graph[node.text][link.nodeB.text] = parseFloat(link.text);
-            } else {
-              graph[node.text]["end"] = parseFloat(link.text);
-            }
-          }
-        });
-      }
-    });
-  }
-  dijkstraSolution = dijkstraAlgorithm(graph);
+  return dijkstraGraph.Dijkstra("A", "F");
 }
 
 const resetButton = document.querySelector("#reset-btn");
@@ -1395,7 +1137,6 @@ resetButton.addEventListener("click", onReset);
 let resolveBy = [];
 
 const primOption = document.querySelector("#Prim-option input");
-const kruskalOption = document.querySelector("#Kruskal-option input");
 const dijkstraOption = document.querySelector("#Dijkstra-option input");
 
 primOption.addEventListener("click", (e) => {
@@ -1405,15 +1146,6 @@ primOption.addEventListener("click", (e) => {
   }
 
   resolveBy = resolveBy.filter((resolve) => resolve !== "Prim");
-});
-
-kruskalOption.addEventListener("click", (e) => {
-  const isChecked = e.target.checked;
-  if (isChecked) {
-    return resolveBy.push("Kruskal");
-  }
-
-  resolveBy = resolveBy.filter((resolve) => resolve !== "Kruskal");
 });
 
 dijkstraOption.addEventListener("click", (e) => {
@@ -1430,7 +1162,6 @@ const solutionsDiv = document.querySelector("#solutions-div");
 
 resolveButton.addEventListener("click", () => {
   const existentPrimSolution = document.querySelector("#prim-solution");
-  const existentKruskalSolution = document.querySelector("#kruskal-solution");
   const existentDijkstraSolution = document.querySelector("#dijkstra-solution");
 
   if (resolveBy.length === 0) {
@@ -1438,24 +1169,15 @@ resolveButton.addEventListener("click", () => {
       existentPrimSolution.remove();
     }
 
-    if (existentKruskalSolution) {
-        existentKruskalSolution.remove();
-    }
-
     if (existentDijkstraSolution) {
-        existentDijkstraSolution.remove()
+      existentDijkstraSolution.remove();
     }
 
-    return
+    return;
   }
-
 
   if (!resolveBy.includes("Prim") && existentPrimSolution) {
     existentPrimSolution.remove();
-  }
-
-  if (!resolveBy.includes("Kruskal") && existentKruskalSolution) {
-    existentKruskalSolution.remove();
   }
 
   if (!resolveBy.includes("Dijkstra") && existentDijkstraSolution) {
@@ -1497,50 +1219,11 @@ resolveButton.addEventListener("click", () => {
       link.text = weight.toString();
       newLinks.push(link);
     });
-    drawPrimSolution(newCanvas.getContext("2d"), newNodes, newLinks);
+    drawSolution(newCanvas.getContext("2d"), newNodes, newLinks);
   }
-  if (resolveBy.includes("Kruskal")) {
-    resolveByKruskal();
-    if (existentKruskalSolution) {
-      existentKruskalSolution.remove();
-    }
-    const div = document.createElement("div");
-    const header = document.createElement("h2");
-    header.className = "font-bold";
-    header.style.fontSize = "3rem";
-    header.textContent = "Solución por el algoritmo de Kruskal";
-    div.append(header);
-    div.id = "kruskal-solution";
-    div.className = "flex flex-col gap-2";
-    solutionsDiv.append(div);
-    const newCanvas = document.createElement("canvas");
-    newCanvas.classList.add("bg-[#0b0b0f]");
-    newCanvas.classList.add("rounded-xl");
-    newCanvas.setAttribute("width", "1100");
-    newCanvas.setAttribute("height", "600");
-    newCanvas.id = "kruskal-canvas";
-    div.append(newCanvas);
-    const newNodes = [];
-    const newLinks = [];
-    mstKruskalSolution.map((node) => {
-      const { src, dest, weight } = node;
-      const oldNodePosition = nodes.find((node) => node.text === src);
-      const oldNodeDestPosition = nodes.find((node) => node.text === dest);
-      const nodeA = new Node(oldNodePosition.x, oldNodePosition.y);
-      nodeA.text = src;
-      const nodeB = new Node(oldNodeDestPosition.x, oldNodeDestPosition.y);
-      nodeB.text = dest;
-      newNodes.push(nodeA);
-      newNodes.push(nodeB);
-      const link = new Link(nodeA, nodeB);
-      link.text = weight.toString();
-      newLinks.push(link);
-    });
 
-    drawPrimSolution(newCanvas.getContext("2d"), newNodes, newLinks);
-  }
   if (resolveBy.includes("Dijkstra")) {
-    resolveByDijkstra();
+    dijkstraSolution = resolveByDijkstra();
     if (existentDijkstraSolution) {
       existentDijkstraSolution.remove();
     }
@@ -1558,56 +1241,26 @@ resolveButton.addEventListener("click", () => {
     newCanvas.classList.add("rounded-xl");
     newCanvas.setAttribute("width", "1100");
     newCanvas.setAttribute("height", "600");
-    newCanvas.id = "prim-canvas";
+    newCanvas.id = "dijkstra-canvas";
     div.append(newCanvas);
     const newNodes = [];
     const newLinks = [];
-    // dijkstraSolution me da algo asi:
-    // path: ["2", "3", "end"]
-    // La idea es adaptarlo para crear nodos y links en base a eso.
-    // Se leeria algo asi: De lastTwoAcceptStates[0] (es el comienzo) a "2", luego a "3" y finalmente al "end" que es lastTwoAcceptStates[1]. La idea seria mapearlo algo asi:
-    // {src: lastTwoAcceptStates[0], dest: "2", weight: 5}, {src: "2", dest: "3", weight: 4}, {src: "3", dest: "end", weight: 3}
-    // Y luego crear los nodos y links en base a eso.
 
-    // const startNodePosition = nodes.find(
-    //   (node) => node.text === lastTwoAcceptStates[0].text,
-    // );
-    //
-    // // Crea un nuevo nodo para el nodo inicial y añádelo a newNodes
-    // const startNode = new Node(startNodePosition.x, startNodePosition.y);
-    // startNode.text = lastTwoAcceptStates[0].text;
-    // newNodes.push(startNode);
+    for (let i = 0; i < dijkstraSolution.length - 1; i++) {
+        const node = dijkstraSolution[i]
+        const nextNode = dijkstraSolution[i + 1]
+        const sourceNode = nodes.find((n) => n.text === node);
+        const linkBetweenNodes = links.find((link) => link.nodeA.text === node && link.nodeB.text === nextNode);
+        newNodes.push(sourceNode)
+        newLinks.push(linkBetweenNodes)
+    }
 
-    dijkstraSolution.path.map((node, index) => {
-      if (index === dijkstraSolution.path.length - 1) return;
-      // if (index === 1) {
-      //   let destNodeFromFirst = newNodes.find((node) => node.text === node);
-      //   let nLink = new Link(newNodes[0], newNodes[1]);
-      //   console.log(node, graph);
-      //   nLink.text = graph["start"][node].toString();
-      //   newLinks.push(nLink);
-      // }
+    const lastNode = nodes.find((node) => node.text === dijkstraSolution[dijkstraSolution.length - 1]);
+    newNodes.push(lastNode)
 
-      const src = node;
-      let dest = dijkstraSolution.path[index + 1];
-      const weight = graph[src][dest];
-      if (dest === "end") {
-        dest = lastTwoAcceptStates[1].text;
-      }
-      const oldNodePosition = nodes.find((node) => node.text === src);
-      const oldNodeDestPosition = nodes.find((node) => node.text === dest);
-      const nodeA = new Node(oldNodePosition.x, oldNodePosition.y);
-      nodeA.text = src;
-      const nodeB = new Node(oldNodeDestPosition.x, oldNodeDestPosition.y);
-      nodeB.text = dest;
-      newNodes.push(nodeA);
-      newNodes.push(nodeB);
-      const link = new Link(nodeA, nodeB);
-      link.text = weight.toString();
-      newLinks.push(link);
-    });
 
-    drawPrimSolution(newCanvas.getContext("2d"), newNodes, newLinks);
+
+    drawSolution(newCanvas.getContext("2d"), newNodes, newLinks);
   }
 
   // Scroll into view
@@ -1617,6 +1270,5 @@ resolveButton.addEventListener("click", () => {
   window.scrollTo({
     top: offsetPosition,
     behavior: "smooth",
-  })
-
+  });
 });

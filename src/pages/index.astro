@@ -1,74 +1,70 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import {CheckboxGroup, Checkbox, Button, Divider} from "@nextui-org/react";
+import Layout from "../layouts/Layout.astro";
+import { CheckboxGroup, Checkbox, Button, Divider } from "@nextui-org/react";
 
 const options = [
-    {
-        name: "Prim"
-    },
-    {
-        name: "Kruskal"
-    },
-    {
-        name: "Dijkstra"
-    },
+  {
+    name: "Prim",
+  },
+  {
+    name: "Dijkstra",
+  },
 ];
 ---
 
 <Layout>
-    <div class="max-w-[1440px] p-6 mx-auto w-full grid lg:grid-cols-12 items-center justify-center h-screen">
-    <canvas id="canvas" height="600" class="bg-[#0b0b0f] rounded-xl col-span-9 w-full h-[600px]"
-                style="box-shadow: rgba(0, 0, 0, 0.1) 0 10px 50px;"></canvas>
-        <div class="bg-[#1d1e28] h-[550px] flex items-center justify-center rounded-xl flex-col gap-4 col-span-3 w-[300px] -ml-4"
-             style="box-shadow: 10px 10px 30px rgb(0 0 0 / 8%)"
-
+  <div
+    class="max-w-[1440px] p-6 mx-auto w-full grid lg:grid-cols-12 items-center justify-center h-screen"
+  >
+    <canvas
+      id="canvas"
+      height="600"
+      class="bg-[#0b0b0f] rounded-xl col-span-9 w-full h-[600px]"
+      style="box-shadow: rgba(0, 0, 0, 0.1) 0 10px 50px;"></canvas>
+    <div
+      class="bg-[#1d1e28] h-[550px] flex items-center justify-center rounded-xl flex-col gap-4 col-span-3 w-[300px] -ml-4"
+      style="box-shadow: 10px 10px 30px rgb(0 0 0 / 8%)"
+    >
+      <div class="flex flex-col gap-2 w-full items-center justify-center">
+        <button
+          class="rounded-full bg-primary px-2 py-3 relative group w-[30%] flex items-center justify-center gap-2 font-medium"
         >
-            <div class="flex flex-col gap-2 w-full items-center justify-center">
+          <span class="text-small"> Ayuda </span>
+        </button>
 
-            <button class="rounded-full bg-primary px-2 py-3 relative group w-[30%] flex items-center justify-center gap-2 font-medium">
+        <button
+          id="reset-btn"
+          class="rounded-full bg-primary px-2 py-3 relative group w-[30%] flex items-center justify-center gap-2 font-medium"
+        >
+          <span class="text-small"> Limpiar </span>
+        </button>
+      </div>
 
-                <span class="text-small">
-                Ayuda
-                </span>
-                <!--<span class="absolute bg-[#F0F2F5] bottom-12 right-0 w-max text-sm -left-[calc(50%_+0px)] py-2 px-4 rounded-lg text-black pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-75 ease-linear "-->
-                <!--      style="box-shadow: rgba(0, 0, 0, 0.15) 0 5px 15px 0;">Limpiar</span>-->
-            </button>
+      <Divider className="w-1/2" />
 
-            <button id="reset-btn" class="rounded-full bg-primary px-2 py-3 relative group w-[30%] flex items-center justify-center gap-2 font-medium">
-
-                <span class="text-small">
-                Limpiar
-                </span>
-                <!--<span class="absolute bg-[#F0F2F5] bottom-12 right-0 w-max text-sm -left-[calc(50%_+0px)] py-2 px-4 rounded-lg text-black pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-75 ease-linear "-->
-                <!--      style="box-shadow: rgba(0, 0, 0, 0.15) 0 5px 15px 0;">Limpiar</span>-->
-            </button>
-            </div>
-
-
-            <Divider className="w-1/2"/>
-
-            <CheckboxGroup
-
-                    id="checkbox-group"
-                    client:visible
-                    label="Algoritmos"
+      <CheckboxGroup id="checkbox-group" client:visible label="Algoritmos">
+        {
+          options.map((option) => (
+            <Checkbox
+              id={`${option.name}-option`}
+              value={option.name}
+              client:visible
             >
-                {
-                    options.map((option) => (
-                            <Checkbox id={`${option.name}-option`} value={option.name}
-                                      client:visible>{option.name}</Checkbox>
-                    ))
-                }
-            </CheckboxGroup>
-            <Button color="primary" client:visible id="resolve" className="w-1/2 mt-2">Resolver</Button>
-        </div>
+              {option.name}
+            </Checkbox>
+          ))
+        }
+      </CheckboxGroup>
+      <Button color="primary" client:visible id="resolve" className="w-1/2 mt-2"
+        >Resolver</Button
+      >
     </div>
+  </div>
 
-    <div class="w-full flex items-center justify-center p-12 flex-col">
-        <h1 class="text-7xl font-bold mb-12">Soluciones</h1>
-        <div id="solutions-div" class="flex flex-col gap-8"></div>
-    </div>
-
+  <div class="w-full flex items-center justify-center p-12 flex-col">
+    <h1 class="text-7xl font-bold mb-12">Soluciones</h1>
+    <div id="solutions-div" class="flex flex-col gap-8"></div>
+  </div>
 </Layout>
 
-<script src="/main/fsm.js" is:inline></script>
+<script src="/src/main/fsm.js"></script>

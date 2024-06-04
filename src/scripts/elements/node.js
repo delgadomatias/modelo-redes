@@ -1,3 +1,5 @@
+import { drawText, nodeRadius, selectedObject } from "../index.js";
+
 export class Node {
   constructor(x, y) {
     this.x = x;
@@ -25,20 +27,21 @@ export class Node {
     c.stroke();
 
     // draw the text
-    drawText(c, this.text, this.x, this.y, null, selectedObject == this);
+    drawText(c, this.text, this.x, this.y, null, selectedObject === this);
 
     // draw a double circle for an accept state
-    // if (this.isAcceptState) {
-    //   c.beginPath();
-    //   c.arc(this.x, this.y, nodeRadius - 6, 0, 2 * Math.PI, false);
-    //   c.stroke();
-    // }
+    if (this.isAcceptState) {
+      c.beginPath();
+      c.arc(this.x, this.y, nodeRadius - 6, 0, 2 * Math.PI, false);
+      c.stroke();
+    }
   }
 
   closestPointOnCircle(x, y) {
-    var dx = x - this.x;
-    var dy = y - this.y;
-    var scale = Math.sqrt(dx * dx + dy * dy);
+    const dx = x - this.x;
+    const dy = y - this.y;
+    const scale = Math.sqrt(dx * dx + dy * dy);
+
     return {
       x: this.x + (dx * nodeRadius) / scale,
       y: this.y + (dy * nodeRadius) / scale,

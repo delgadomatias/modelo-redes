@@ -1,6 +1,6 @@
-import { drawArrow } from "../main.js";
+import { drawArrow } from "../../fm-main.js";
 
-export class TemporaryLink {
+export class FmTemporaryLink {
   constructor(from, to) {
     this.from = from;
     this.to = to;

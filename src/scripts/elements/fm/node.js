@@ -1,6 +1,6 @@
-import { drawText, nodeRadius, selectedObject } from "../main.js";
+import { drawText, nodeRadius, selectedObject } from "../../fm-main.js";
 
-export class Node {
+export class FmNode {
   constructor(x, y) {
     this.x = x;
     this.y = y;

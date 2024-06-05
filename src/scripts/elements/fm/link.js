@@ -1,17 +1,21 @@
 import {
   drawText,
+  editingEndText,
   hitTargetPadding,
   nodeRadius,
   selectedObject,
   snapToPadding,
-} from "../main.js";
-import { circleFromThreePoints } from "../utils";
+} from "../../fm-main.js";
+import { circleFromThreePoints } from "../../utils/index.js";
 
-export class Link {
+export class FMLink {
   constructor(a, b) {
     this.nodeA = a;
     this.nodeB = b;
     this.text = "";
+    this.textStart = "";
+    this.textEnd = "";
+
     this.lineAngleAdjust = 0; // value to add to textAngle when link is straight line
 
     // make anchor point relative to the locations of nodeA and nodeB
@@ -108,60 +112,67 @@ export class Link {
   }
 
   draw(c) {
-    let textY;
-    let textAngle;
-    let textX;
-    const stuff = this.getEndPointsAndCircle();
-    // draw arc
-    c.beginPath();
-    if (stuff.hasCircle) {
-      c.arc(
-        stuff.circleX,
-        stuff.circleY,
-        stuff.circleRadius,
-        stuff.startAngle,
-        stuff.endAngle,
-        stuff.isReversed,
-      );
-    } else {
-      c.moveTo(stuff.startX, stuff.startY);
-      c.lineTo(stuff.endX, stuff.endY);
-    }
-    c.stroke();
-    // draw the head of the arrow
-    // if(stuff.hasCircle) {
-    //     drawArrow(c, stuff.endX, stuff.endY, stuff.endAngle - stuff.reverseScale * (Math.PI / 2));
-    // } else {
-    //     drawArrow(c, stuff.endX, stuff.endY, Math.atan2(stuff.endY - stuff.startY, stuff.endX - stuff.startX));
-    // }
+    // Dibuja la línea entre nodeA y nodeB
+    const startCoords = this.nodeA.closestPointOnCircle(
+      this.nodeB.x,
+      this.nodeB.y,
+    );
+    const endCoords = this.nodeB.closestPointOnCircle(
+      this.nodeA.x,
+      this.nodeA.y,
+    );
 
-    // draw the text
-    if (stuff.hasCircle) {
-      const startAngle = stuff.startAngle;
-      let endAngle = stuff.endAngle;
-      if (endAngle < startAngle) {
-        endAngle += Math.PI * 2;
-      }
-      textAngle = (startAngle + endAngle) / 2 + stuff.isReversed * Math.PI;
-      textX = stuff.circleX + stuff.circleRadius * Math.cos(textAngle);
-      textY = stuff.circleY + stuff.circleRadius * Math.sin(textAngle);
-      drawText(c, this.text, textX, textY, textAngle, selectedObject === this);
-    } else {
-      textX = (stuff.startX + stuff.endX) / 2;
-      textY = (stuff.startY + stuff.endY) / 2;
-      textAngle = Math.atan2(
-        stuff.endX - stuff.startX,
-        stuff.startY - stuff.endY,
-      );
-      drawText(
-        c,
-        this.text,
-        textX,
-        textY,
-        textAngle + this.lineAngleAdjust,
-        selectedObject === this,
-      );
-    }
+    c.beginPath();
+    c.moveTo(startCoords.x, startCoords.y);
+    c.lineTo(endCoords.x, endCoords.y);
+    c.stroke();
+
+    // Calcula el ángulo de la línea
+    const angle = Math.atan2(
+      endCoords.y - startCoords.y,
+      endCoords.x - startCoords.x,
+    );
+
+    // Separación adicional para los textos
+    const textOffset = 10;
+    const perpendicularOffset = 20;
+
+    // Calcula las posiciones del texto
+    const startX =
+      startCoords.x +
+      Math.cos(angle) * textOffset -
+      Math.sin(angle) * perpendicularOffset;
+    const startY =
+      startCoords.y +
+      Math.sin(angle) * textOffset +
+      Math.cos(angle) * perpendicularOffset;
+    const endX =
+      endCoords.x -
+      Math.cos(angle) * textOffset +
+      Math.sin(angle) * perpendicularOffset;
+    const endY =
+      endCoords.y -
+      Math.sin(angle) * textOffset -
+      Math.cos(angle) * perpendicularOffset;
+
+    // Dibuja el texto en una posición fija relativa a los nodos de inicio y final
+    drawText(
+      c,
+      this.textStart,
+      startX,
+      startY,
+      null,
+      this === selectedObject && !editingEndText,
+    );
+
+    drawText(
+      c,
+      this.textEnd,
+      endX,
+      endY,
+      null,
+      this === selectedObject && editingEndText,
+    );
   }
 
   containsPoint(x, y) {

@@ -1,11 +1,11 @@
-import { restoreBackup, saveBackup } from "./utils/index.js";
 import {
-  Link,
-  Node,
-  SelfLink,
-  StartLink,
-  TemporaryLink,
-} from "./elements/index.js";
+  FMLink,
+  FmNode,
+  FmSelfLink,
+  FmStartLink,
+  FmTemporaryLink,
+} from "./elements/fm";
+import { restoreBackup, saveBackup } from "./utils/fm-backup.js";
 
 export let canvas;
 export let caretTimer;
@@ -25,6 +25,260 @@ let mouse;
 let targetNode;
 export let acceptedNodes = [];
 export let editingEndText = false;
+
+document.addEventListener("astro:page-load", () => {
+  if (window.location.pathname !== "/flujo-maximo") return;
+  document.onkeydown = () => {};
+  document.onkeyup = () => {};
+  document.onkeypress = () => {};
+
+  canvas = document.querySelector("#fm-canvas");
+  if (!canvas) return;
+
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+  canvas.onmousedown = () => {};
+  canvas.ondblclick = () => {};
+  canvas.onmousemove = () => {};
+  canvas.onmouseup = () => {};
+  canvas.ondblclick = () => {};
+
+  canvas.onmousedown = function (e) {
+    mouse = crossBrowserRelativeMousePos(e);
+    selectedObject = selectObject(mouse.x, mouse.y);
+    movingObject = false;
+    originalClick = mouse;
+
+    if (selectedObject != null) {
+      if (shift && selectedObject instanceof FmNode) {
+        currentLink = new FmSelfLink(selectedObject, mouse);
+      } else {
+        movingObject = true;
+        if (selectedObject.setMouseStart) {
+          selectedObject.setMouseStart(mouse.x, mouse.y);
+        }
+      }
+      resetCaret();
+    } else if (shift) {
+      currentLink = new FmTemporaryLink(mouse, mouse);
+    }
+
+    draw();
+
+    if (canvasHasFocus()) {
+      // disable drag-and-drop only if the canvas is already focused
+      return false;
+    } else {
+      // otherwise, let the browser switch the focus away from wherever it was
+      resetCaret();
+      return true;
+    }
+  };
+
+  canvas.ondblclick = function (e) {
+    mouse = crossBrowserRelativeMousePos(e);
+    selectedObject = selectObject(mouse.x, mouse.y);
+
+    if (selectedObject == null) {
+      selectedObject = new FmNode(mouse.x, mouse.y);
+      nodes.push(selectedObject);
+      resetCaret();
+      draw();
+    } else if (selectedObject instanceof FmNode) {
+      if (!selectedObject.isAcceptState) {
+        console.log(acceptedNodes);
+        if (acceptedNodes.length === 2) {
+          // Cambia el estado del último nodo aceptado a falso
+          let lastAcceptedNode = acceptedNodes[1];
+          lastAcceptedNode.isAcceptState = false;
+
+          // Elimina el último nodo de la lista de nodos aceptados
+          acceptedNodes = acceptedNodes.slice(0, 1);
+        }
+
+        // Agrega el nodo seleccionado a la lista de nodos aceptados
+        acceptedNodes.push(selectedObject);
+        selectedObject.isAcceptState = true;
+      } else {
+        // Si el nodo seleccionado ya es un nodo aceptado, cambia su estado a falso
+        selectedObject.isAcceptState = false;
+
+        // Elimina el nodo seleccionado de la lista de nodos aceptados
+        acceptedNodes = acceptedNodes.filter((node) => node !== selectedObject);
+      }
+
+      draw();
+    } else if (selectedObject instanceof FMLink) {
+      // Alternar entre editar el texto de inicio o el texto de fin
+      editingEndText = !editingEndText;
+      resetCaret();
+    }
+  };
+
+  canvas.onmousemove = function (e) {
+    mouse = crossBrowserRelativeMousePos(e);
+
+    if (currentLink != null) {
+      targetNode = selectObject(mouse.x, mouse.y);
+      if (!(targetNode instanceof FmNode)) {
+        targetNode = null;
+      }
+
+      if (selectedObject == null) {
+        if (targetNode != null) {
+          currentLink = new FmStartLink(targetNode, originalClick);
+        } else {
+          currentLink = new FmTemporaryLink(originalClick, mouse);
+        }
+      } else {
+        if (targetNode === selectedObject) {
+          currentLink = new FmSelfLink(selectedObject, mouse);
+        } else if (targetNode != null) {
+          currentLink = new FMLink(selectedObject, targetNode);
+        } else {
+          currentLink = new FmTemporaryLink(
+            selectedObject.closestPointOnCircle(mouse.x, mouse.y),
+            mouse,
+          );
+        }
+      }
+      draw();
+    }
+
+    if (movingObject) {
+      selectedObject.setAnchorPoint(mouse.x, mouse.y);
+      if (selectedObject instanceof FmNode) {
+        snapNode(selectedObject);
+      }
+      draw();
+    }
+  };
+
+  canvas.onmouseup = function () {
+    movingObject = false;
+
+    if (currentLink != null) {
+      if (!(currentLink instanceof FmTemporaryLink)) {
+        selectedObject = currentLink;
+        links.push(currentLink);
+        resetCaret();
+      }
+      currentLink = null;
+      draw();
+    }
+  };
+
+  shift = false;
+  document.onkeydown = function (e) {
+    key = crossBrowserKey(e);
+
+    if (key === 16) {
+      shift = true;
+    } else if (!canvasHasFocus()) {
+      // don't read keystrokes when other things have focus
+      return true;
+    } else if (key === 8) {
+      // backspace key
+      if (selectedObject != null && "text" in selectedObject) {
+        if (editingEndText) {
+          selectedObject.textEnd = selectedObject.textEnd.slice(0, -1);
+        } else {
+          selectedObject.textStart = selectedObject.textStart.slice(0, -1);
+        }
+
+        resetCaret();
+        draw();
+      } else if (selectedObject instanceof FMLink) {
+        if (editingEndText) {
+          selectedObject.textEnd = selectedObject.textEnd.slice(0, -1);
+        } else {
+          selectedObject.textStart = selectedObject.textStart.slice(0, -1);
+        }
+        resetCaret();
+        draw();
+      }
+
+      // backspace is a shortcut for the back button, but do NOT want to change pages
+      return false;
+    } else if (key === 46) {
+      // delete key
+      if (selectedObject != null) {
+        for (let i = 0; i < nodes.length; i++) {
+          if (nodes[i] === selectedObject) {
+            nodes.splice(i--, 1);
+          }
+        }
+        for (let i = 0; i < links.length; i++) {
+          if (
+            links[i] === selectedObject ||
+            links[i].node === selectedObject ||
+            links[i].nodeA === selectedObject ||
+            links[i].nodeB === selectedObject
+          ) {
+            links.splice(i--, 1);
+          }
+        }
+        selectedObject = null;
+        draw();
+      }
+    } else if (key === 9) {
+      // Tecla Tab
+      // Alternar entre el texto inicial y final de la relación
+      if (selectedObject instanceof FMLink) {
+        editingEndText = !editingEndText;
+        resetCaret();
+        draw();
+        e.preventDefault(); // Prevenir el comportamiento por defecto de la tecla Tab
+      }
+    }
+  };
+
+  document.onkeyup = function (e) {
+    key = crossBrowserKey(e);
+
+    if (key === 16) {
+      shift = false;
+    }
+  };
+
+  document.onkeypress = function (e) {
+    key = crossBrowserKey(e);
+    if (!canvasHasFocus()) {
+      return true;
+    }
+
+    if (
+      key >= 0x20 &&
+      key <= 0x7e &&
+      !e.metaKey &&
+      !e.altKey &&
+      !e.ctrlKey &&
+      selectedObject != null
+    ) {
+      if (selectedObject instanceof FMLink) {
+        if (editingEndText) {
+          // Editar el texto en el final de la relación
+          selectedObject.textEnd += String.fromCharCode(key);
+        } else {
+          // Editar el texto en el inicio de la relación
+          selectedObject.textStart += String.fromCharCode(key);
+        }
+        resetCaret();
+        draw();
+        return false;
+      } else if ("text" in selectedObject) {
+        selectedObject.text += String.fromCharCode(key);
+        resetCaret();
+        draw();
+        return false;
+      }
+    } else if (key === 8) {
+      return false;
+    }
+  };
+
+  draw();
+});
 
 function canvasHasFocus() {
   return (document.activeElement || document.body) === document.body;
@@ -235,7 +489,7 @@ function crossBrowserRelativeMousePos(e) {
 
 // Listeners
 window.onload = function () {
-  canvas = document.getElementById("canvas");
+  canvas = document.getElementById("fm-canvas");
   canvas.width = canvas.offsetWidth;
   canvas.height = canvas.offsetHeight;
   restoreBackup();
@@ -248,8 +502,8 @@ window.onload = function () {
     originalClick = mouse;
 
     if (selectedObject != null) {
-      if (shift && selectedObject instanceof Node) {
-        currentLink = new SelfLink(selectedObject, mouse);
+      if (shift && selectedObject instanceof FmNode) {
+        currentLink = new FmSelfLink(selectedObject, mouse);
       } else {
         movingObject = true;
         if (selectedObject.setMouseStart) {
@@ -258,7 +512,7 @@ window.onload = function () {
       }
       resetCaret();
     } else if (shift) {
-      currentLink = new TemporaryLink(mouse, mouse);
+      currentLink = new FmTemporaryLink(mouse, mouse);
     }
 
     draw();
@@ -278,11 +532,11 @@ window.onload = function () {
     selectedObject = selectObject(mouse.x, mouse.y);
 
     if (selectedObject == null) {
-      selectedObject = new Node(mouse.x, mouse.y);
+      selectedObject = new FmNode(mouse.x, mouse.y);
       nodes.push(selectedObject);
       resetCaret();
       draw();
-    } else if (selectedObject instanceof Node) {
+    } else if (selectedObject instanceof FmNode) {
       if (!selectedObject.isAcceptState) {
         console.log(acceptedNodes);
         if (acceptedNodes.length === 2) {
@@ -306,7 +560,7 @@ window.onload = function () {
       }
 
       draw();
-    } else if (selectedObject instanceof Link) {
+    } else if (selectedObject instanceof FMLink) {
       // Alternar entre editar el texto de inicio o el texto de fin
       editingEndText = !editingEndText;
       resetCaret();
@@ -318,23 +572,23 @@ window.onload = function () {
 
     if (currentLink != null) {
       targetNode = selectObject(mouse.x, mouse.y);
-      if (!(targetNode instanceof Node)) {
+      if (!(targetNode instanceof FmNode)) {
         targetNode = null;
       }
 
       if (selectedObject == null) {
         if (targetNode != null) {
-          currentLink = new StartLink(targetNode, originalClick);
+          currentLink = new FmStartLink(targetNode, originalClick);
         } else {
-          currentLink = new TemporaryLink(originalClick, mouse);
+          currentLink = new FmTemporaryLink(originalClick, mouse);
         }
       } else {
         if (targetNode === selectedObject) {
-          currentLink = new SelfLink(selectedObject, mouse);
+          currentLink = new FmSelfLink(selectedObject, mouse);
         } else if (targetNode != null) {
-          currentLink = new Link(selectedObject, targetNode);
+          currentLink = new FMLink(selectedObject, targetNode);
         } else {
-          currentLink = new TemporaryLink(
+          currentLink = new FmTemporaryLink(
             selectedObject.closestPointOnCircle(mouse.x, mouse.y),
             mouse,
           );
@@ -345,7 +599,7 @@ window.onload = function () {
 
     if (movingObject) {
       selectedObject.setAnchorPoint(mouse.x, mouse.y);
-      if (selectedObject instanceof Node) {
+      if (selectedObject instanceof FmNode) {
         snapNode(selectedObject);
       }
       draw();
@@ -356,7 +610,7 @@ window.onload = function () {
     movingObject = false;
 
     if (currentLink != null) {
-      if (!(currentLink instanceof TemporaryLink)) {
+      if (!(currentLink instanceof FmTemporaryLink)) {
         selectedObject = currentLink;
         links.push(currentLink);
         resetCaret();
@@ -380,13 +634,15 @@ document.onkeydown = function (e) {
   } else if (key === 8) {
     // backspace key
     if (selectedObject != null && "text" in selectedObject) {
-      selectedObject.text = selectedObject.text.substr(
-        0,
-        selectedObject.text.length - 1,
-      );
+      if (editingEndText) {
+        selectedObject.textEnd = selectedObject.textEnd.slice(0, -1);
+      } else {
+        selectedObject.textStart = selectedObject.textStart.slice(0, -1);
+      }
+
       resetCaret();
       draw();
-    } else if (selectedObject instanceof Link) {
+    } else if (selectedObject instanceof FMLink) {
       if (editingEndText) {
         selectedObject.textEnd = selectedObject.textEnd.slice(0, -1);
       } else {
@@ -419,6 +675,15 @@ document.onkeydown = function (e) {
       selectedObject = null;
       draw();
     }
+  } else if (key === 9) {
+    // Tecla Tab
+    // Alternar entre el texto inicial y final de la relación
+    if (selectedObject instanceof FMLink) {
+      editingEndText = !editingEndText;
+      resetCaret();
+      draw();
+      e.preventDefault(); // Prevenir el comportamiento por defecto de la tecla Tab
+    }
   }
 };
 
@@ -430,7 +695,7 @@ document.onkeyup = function (e) {
   }
 };
 
-document.addEventListener("keypress", (e) => {
+document.onkeypress = function (e) {
   key = crossBrowserKey(e);
   if (!canvasHasFocus()) {
     return true;
@@ -444,7 +709,7 @@ document.addEventListener("keypress", (e) => {
     !e.ctrlKey &&
     selectedObject != null
   ) {
-    if (selectedObject instanceof Link) {
+    if (selectedObject instanceof FMLink) {
       if (editingEndText) {
         // Editar el texto en el final de la relación
         selectedObject.textEnd += String.fromCharCode(key);
@@ -464,4 +729,4 @@ document.addEventListener("keypress", (e) => {
   } else if (key === 8) {
     return false;
   }
-});
+};

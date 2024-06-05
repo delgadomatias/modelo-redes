@@ -1,5 +1,7 @@
-import { Link, Node, SelfLink, StartLink } from "../elements/index.js";
-import { acceptedNodes, links, nodes } from "../main.js";
+import { FMLink, FmNode, FmSelfLink, FmStartLink } from "../elements/fm";
+import { acceptedNodes, links, nodes } from "../fm-main.js";
+
+// import { acceptedNodes, links, nodes } from "../main.js";
 
 export function restoreBackup() {
   if (!localStorage || !JSON) {
@@ -7,11 +9,11 @@ export function restoreBackup() {
   }
 
   try {
-    const backup = JSON.parse(localStorage["fsm"]);
+    const backup = JSON.parse(localStorage["fm"]);
 
     for (let i = 0; i < backup.nodes.length; i++) {
       const backupNode = backup.nodes[i];
-      const node = new Node(backupNode.x, backupNode.y);
+      const node = new FmNode(backupNode.x, backupNode.y);
       node.isAcceptState = backupNode.isAcceptState;
       node.text = backupNode.text;
       if (node.isAcceptState) {
@@ -23,19 +25,22 @@ export function restoreBackup() {
       const backupLink = backup.links[i];
       let link = null;
       if (backupLink.type === "SelfLink") {
-        link = new SelfLink(nodes[backupLink.node]);
+        link = new FmSelfLink(nodes[backupLink.node]);
         link.anchorAngle = backupLink.anchorAngle;
-        link.text = backupLink.text;
+        link.textStart = backupLink.textStart;
+        link.textEnd = backupLink.textEnd;
       } else if (backupLink.type === "StartLink") {
-        link = new StartLink(nodes[backupLink.node]);
+        link = new FmStartLink(nodes[backupLink.node]);
         link.deltaX = backupLink.deltaX;
         link.deltaY = backupLink.deltaY;
-        link.text = backupLink.text;
+        link.textStart = backupLink.textStart;
+        link.textEnd = backupLink.textEnd;
       } else if (backupLink.type === "Link") {
-        link = new Link(nodes[backupLink.nodeA], nodes[backupLink.nodeB]);
+        link = new FMLink(nodes[backupLink.nodeA], nodes[backupLink.nodeB]);
         link.parallelPart = backupLink.parallelPart;
         link.perpendicularPart = backupLink.perpendicularPart;
-        link.text = backupLink.text;
+        link.textStart = backupLink.textStart;
+        link.textEnd = backupLink.textEnd;
         link.lineAngleAdjust = backupLink.lineAngleAdjust;
       }
       if (link != null) {
@@ -43,7 +48,7 @@ export function restoreBackup() {
       }
     }
   } catch (e) {
-    localStorage["fsm"] = "";
+    localStorage["fm"] = "";
   }
 }
 
@@ -70,27 +75,30 @@ export function saveBackup() {
   for (let i = 0; i < links.length; i++) {
     const link = links[i];
     let backupLink = null;
-    if (link instanceof SelfLink) {
+    if (link instanceof FmSelfLink) {
       backupLink = {
         type: "SelfLink",
         node: nodes.indexOf(link.node),
-        text: link.text,
+        textStart: link.textStart,
+        textEnd: link.textEnd,
         anchorAngle: link.anchorAngle,
       };
-    } else if (link instanceof StartLink) {
+    } else if (link instanceof FmStartLink) {
       backupLink = {
         type: "StartLink",
         node: nodes.indexOf(link.node),
-        text: link.text,
+        textStart: link.textStart,
+        textEnd: link.textEnd,
         deltaX: link.deltaX,
         deltaY: link.deltaY,
       };
-    } else if (link instanceof Link) {
+    } else if (link instanceof FMLink) {
       backupLink = {
         type: "Link",
         nodeA: nodes.indexOf(link.nodeA),
         nodeB: nodes.indexOf(link.nodeB),
-        text: link.text,
+        textStart: link.textStart,
+        textEnd: link.textEnd,
         lineAngleAdjust: link.lineAngleAdjust,
         parallelPart: link.parallelPart,
         perpendicularPart: link.perpendicularPart,
@@ -101,5 +109,5 @@ export function saveBackup() {
     }
   }
 
-  localStorage["fsm"] = JSON.stringify(backup);
+  localStorage["fm"] = JSON.stringify(backup);
 }

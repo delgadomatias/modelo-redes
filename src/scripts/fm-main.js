@@ -59,6 +59,7 @@ function drawOnCanvas(c, nodes, links) {
 }
 function draw() {
   if (!canvas) return;
+  canvas = document.getElementById("fm-canvas");
   drawUsing(canvas.getContext("2d"));
   saveBackup();
 }
@@ -224,7 +225,7 @@ export function execute() {
   }
 
   function draw() {
-    if (!canvas) return;
+    // if (!canvas) return;
     drawUsing(canvas.getContext("2d"));
     saveBackup();
   }
@@ -232,7 +233,9 @@ export function execute() {
   function resetCaret() {
     clearInterval(caretTimer);
     caretVisible = !caretVisible;
-    caretTimer = setInterval(draw, 500);
+    caretTimer = setInterval(() => {
+      draw();
+    }, 500);
     caretVisible = true;
   }
 
@@ -422,7 +425,9 @@ export function execute() {
     }
 
     if (movingObject) {
+      console.log(mouse.x, mouse.y);
       selectedObject.setAnchorPoint(mouse.x, mouse.y);
+      console.log(selectedObject);
       if (selectedObject instanceof FmNode) {
         snapNode(selectedObject);
       }

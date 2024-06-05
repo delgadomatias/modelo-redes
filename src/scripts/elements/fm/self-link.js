@@ -3,9 +3,9 @@ import {
   hitTargetPadding,
   nodeRadius,
   selectedObject,
-} from "../main.js";
+} from "../../fm-main.js";
 
-export class SelfLink {
+export class FmSelfLink {
   constructor(node, mouse) {
     this.node = node;
     this.anchorAngle = 0;

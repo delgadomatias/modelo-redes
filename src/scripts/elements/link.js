@@ -4,17 +4,14 @@ import {
   nodeRadius,
   selectedObject,
   snapToPadding,
-} from "../index.js";
-import { circleFromThreePoints } from "../utils/index.js";
+} from "../main.js";
+import { circleFromThreePoints } from "../utils";
 
 export class Link {
   constructor(a, b) {
     this.nodeA = a;
     this.nodeB = b;
     this.text = "";
-    this.textStart = "";
-    this.textEnd = "";
-
     this.lineAngleAdjust = 0; // value to add to textAngle when link is straight line
 
     // make anchor point relative to the locations of nodeA and nodeB
@@ -137,33 +134,6 @@ export class Link {
     // } else {
     //     drawArrow(c, stuff.endX, stuff.endY, Math.atan2(stuff.endY - stuff.startY, stuff.endX - stuff.startX));
     // }
-
-    const startCoords = this.nodeA.closestPointOnCircle(
-      this.nodeB.x,
-      this.nodeB.y,
-    );
-    drawText(
-      c,
-      this.textStart,
-      startCoords.x,
-      startCoords.y,
-      null,
-      this === selectedObject,
-    );
-
-    // Dibuja el texto en el final de la relación
-    const endCoords = this.nodeB.closestPointOnCircle(
-      this.nodeA.x,
-      this.nodeA.y,
-    );
-    drawText(
-      c,
-      this.textEnd,
-      endCoords.x,
-      endCoords.y,
-      null,
-      this === selectedObject,
-    );
 
     // draw the text
     if (stuff.hasCircle) {

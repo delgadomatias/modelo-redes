@@ -16,12 +16,11 @@ const options = [
   <div
     class="max-w-[1440px] p-6 mx-auto w-full grid lg:grid-cols-12 items-center justify-center min-h-screen place-content-center"
   >
-    <div class="col-span-12 mb-4 ml-2" transition:name="header">
-      <h2 class="text-5xl w-fit">Prim y Dijkstra</h2>
+    <div class="col-span-12 mb-4 ml-2" transition:name="fm-header">
+      <h2 class="text-5xl w-fit ease-linear">Resolver Flujo Maximo</h2>
     </div>
-
     <canvas
-      id="canvas"
+      id="fm-canvas"
       height="600"
       class="bg-[#0b0b0f] rounded-xl col-span-9 w-full h-[600px]"
       style="box-shadow: rgba(0, 0, 0, 0.1) 0 10px 50px;"></canvas>
@@ -37,7 +36,7 @@ const options = [
         </button>
 
         <button
-          id="reset-btn"
+          id="fm-reset-btn"
           class="rounded-full bg-primary px-2 py-3 relative group w-[30%] flex items-center justify-center gap-2 font-medium"
         >
           <span class="text-small"> Limpiar </span>
@@ -46,30 +45,17 @@ const options = [
 
       <Divider className="w-1/2" />
 
-      <CheckboxGroup id="checkbox-group" client:visible label="Algoritmos">
-        {
-          options.map((option) => (
-            <Checkbox
-              id={`${option.name}-option`}
-              value={option.name}
-              client:visible
-            >
-              {option.name}
-            </Checkbox>
-          ))
-        }
-      </CheckboxGroup>
-      <Button color="primary" client:visible id="resolve" className="w-1/2 mt-2"
+      <Button color="primary" client:visible id="fm-resolve" className="w-1/2"
         >Resolver</Button
       >
     </div>
 
-    <div class="col-span-12 mt-4 ml-2" transition:name="fm-header">
+    <div class="col-span-12 mt-4 ml-2" transition:name="header">
       <a
+        href="/"
         class="text-4xl underline underline-offset-2 cursor-pointer hover:text-red-500 w-fit transition-all duration-75 ease-linear"
-        href="/flujo-maximo"
       >
-        Resolver Flujo Maximo
+        Prim y Dijkstra
       </a>
     </div>
   </div>
@@ -81,8 +67,8 @@ const options = [
 </Layout>
 
 <script>
-  import { execute } from "../scripts/main";
-  import { executeResolver } from "../scripts/resolver";
+  import { execute } from "../scripts/fm-main";
+  import { executeResolver } from "../scripts/fm-resolver";
 
   function init() {
     execute();

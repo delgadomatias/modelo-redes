@@ -3,9 +3,9 @@ import {
   hitTargetPadding,
   selectedObject,
   snapToPadding,
-} from "../main.js";
+} from "../../fm-main.js";
 
-export class StartLink {
+export class FmStartLink {
   constructor(node, start) {
     this.node = node;
     this.deltaX = 0;

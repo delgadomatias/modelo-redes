@@ -80,5 +80,14 @@ const options = [
   </div>
 </Layout>
 
-<script src="/src/scripts/main.js"></script>
-<script src="/src/scripts/resolver.js"></script>
+<script>
+  import { execute } from "../scripts/main";
+  import { executeResolver } from "../scripts/resolver";
+  function init() {
+    execute();
+    executeResolver();
+  }
+
+  document.addEventListener("astro:page-load", init);
+  init();
+</script>

@@ -36,7 +36,7 @@ const options = [
         </button>
 
         <button
-          id="reset-btn"
+          id="fm-reset-btn"
           class="rounded-full bg-primary px-2 py-3 relative group w-[30%] flex items-center justify-center gap-2 font-medium"
         >
           <span class="text-small"> Limpiar </span>
@@ -66,5 +66,15 @@ const options = [
   </div>
 </Layout>
 
-<script src="/src/scripts/fm-main.js"></script>
-<script src="/src/scripts/fm-resolver.js"></script>
+<script>
+  import { execute } from "../scripts/fm-main";
+  import { executeResolver } from "../scripts/fm-resolver";
+
+  function init() {
+    execute();
+    executeResolver();
+  }
+
+  document.addEventListener("astro:page-load", init);
+  init();
+</script>

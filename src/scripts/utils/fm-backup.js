@@ -24,18 +24,18 @@ export function restoreBackup() {
     for (let i = 0; i < backup.links.length; i++) {
       const backupLink = backup.links[i];
       let link = null;
-      if (backupLink.type === "SelfLink") {
+      if (backupLink.type === "FmSelfLink") {
         link = new FmSelfLink(nodes[backupLink.node]);
         link.anchorAngle = backupLink.anchorAngle;
         link.textStart = backupLink.textStart;
         link.textEnd = backupLink.textEnd;
-      } else if (backupLink.type === "StartLink") {
+      } else if (backupLink.type === "FmStartLink") {
         link = new FmStartLink(nodes[backupLink.node]);
         link.deltaX = backupLink.deltaX;
         link.deltaY = backupLink.deltaY;
         link.textStart = backupLink.textStart;
         link.textEnd = backupLink.textEnd;
-      } else if (backupLink.type === "Link") {
+      } else if (backupLink.type === "FMLink") {
         link = new FMLink(nodes[backupLink.nodeA], nodes[backupLink.nodeB]);
         link.parallelPart = backupLink.parallelPart;
         link.perpendicularPart = backupLink.perpendicularPart;
@@ -77,7 +77,7 @@ export function saveBackup() {
     let backupLink = null;
     if (link instanceof FmSelfLink) {
       backupLink = {
-        type: "SelfLink",
+        type: "FmSelfLink",
         node: nodes.indexOf(link.node),
         textStart: link.textStart,
         textEnd: link.textEnd,
@@ -85,7 +85,7 @@ export function saveBackup() {
       };
     } else if (link instanceof FmStartLink) {
       backupLink = {
-        type: "StartLink",
+        type: "FmStartLink",
         node: nodes.indexOf(link.node),
         textStart: link.textStart,
         textEnd: link.textEnd,
@@ -94,7 +94,7 @@ export function saveBackup() {
       };
     } else if (link instanceof FMLink) {
       backupLink = {
-        type: "Link",
+        type: "FMLink",
         nodeA: nodes.indexOf(link.nodeA),
         nodeB: nodes.indexOf(link.nodeB),
         textStart: link.textStart,

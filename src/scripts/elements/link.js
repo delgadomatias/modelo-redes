@@ -1,11 +1,5 @@
-import {
-  drawText,
-  hitTargetPadding,
-  nodeRadius,
-  selectedObject,
-  snapToPadding,
-} from "../main.js";
 import { circleFromThreePoints } from "../utils";
+import { Main } from "../main-dos.js";
 
 export class Link {
   constructor(a, b) {
@@ -13,6 +7,7 @@ export class Link {
     this.nodeB = b;
     this.text = "";
     this.lineAngleAdjust = 0; // value to add to textAngle when link is straight line
+    this.main = Main.getInstance();
 
     // make anchor point relative to the locations of nodeA and nodeB
     this.parallelPart = 0.5; // percentage from nodeA to nodeB
@@ -47,7 +42,7 @@ export class Link {
     if (
       this.parallelPart > 0 &&
       this.parallelPart < 1 &&
-      Math.abs(this.perpendicularPart) < snapToPadding
+      Math.abs(this.perpendicularPart) < this.main.snapToPadding
     ) {
       this.lineAngleAdjust = (this.perpendicularPart < 0) * Math.PI;
       this.perpendicularPart = 0;
@@ -82,10 +77,10 @@ export class Link {
     let reverseScale = isReversed ? 1 : -1;
     let startAngle =
       Math.atan2(this.nodeA.y - circle.y, this.nodeA.x - circle.x) -
-      (reverseScale * nodeRadius) / circle.radius;
+      (reverseScale * this.main.nodeRadius) / circle.radius;
     let endAngle =
       Math.atan2(this.nodeB.y - circle.y, this.nodeB.x - circle.x) +
-      (reverseScale * nodeRadius) / circle.radius;
+      (reverseScale * this.main.nodeRadius) / circle.radius;
     let startX = circle.x + circle.radius * Math.cos(startAngle);
     let startY = circle.y + circle.radius * Math.sin(startAngle);
     let endX = circle.x + circle.radius * Math.cos(endAngle);
@@ -107,7 +102,7 @@ export class Link {
     };
   }
 
-  draw(c) {
+  draw = (c) => {
     let textY;
     let textAngle;
     let textX;
@@ -145,7 +140,14 @@ export class Link {
       textAngle = (startAngle + endAngle) / 2 + stuff.isReversed * Math.PI;
       textX = stuff.circleX + stuff.circleRadius * Math.cos(textAngle);
       textY = stuff.circleY + stuff.circleRadius * Math.sin(textAngle);
-      drawText(c, this.text, textX, textY, textAngle, selectedObject === this);
+      this.main.drawText(
+        c,
+        this.text,
+        textX,
+        textY,
+        textAngle,
+        this.main.selectedObject === this,
+      );
     } else {
       textX = (stuff.startX + stuff.endX) / 2;
       textY = (stuff.startY + stuff.endY) / 2;
@@ -153,16 +155,17 @@ export class Link {
         stuff.endX - stuff.startX,
         stuff.startY - stuff.endY,
       );
-      drawText(
+
+      this.main.drawText(
         c,
         this.text,
         textX,
         textY,
         textAngle + this.lineAngleAdjust,
-        selectedObject === this,
+        this.main.selectedObject === this,
       );
     }
-  }
+  };
 
   containsPoint(x, y) {
     const stuff = this.getEndPointsAndCircle();
@@ -170,7 +173,7 @@ export class Link {
       const dx = x - stuff.circleX;
       const dy = y - stuff.circleY;
       const distance = Math.sqrt(dx * dx + dy * dy) - stuff.circleRadius;
-      if (Math.abs(distance) < hitTargetPadding) {
+      if (Math.abs(distance) < this.main.hitTargetPadding) {
         let angle = Math.atan2(dy, dx);
         let startAngle = stuff.startAngle;
         let endAngle = stuff.endAngle;
@@ -201,7 +204,9 @@ export class Link {
       let distance =
         (dx * (y - stuff.startY) - dy * (x - stuff.startX)) / length;
       return (
-        percent > 0 && percent < 1 && Math.abs(distance) < hitTargetPadding
+        percent > 0 &&
+        percent < 1 &&
+        Math.abs(distance) < this.main.hitTargetPadding
       );
     }
 

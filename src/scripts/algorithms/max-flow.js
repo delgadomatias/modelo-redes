@@ -1,4 +1,4 @@
-function bfs(rGraph, s, t, parent) {
+export function bfs(rGraph, s, t, parent) {
   var visited = [];
   var queue = [];
   var V = rGraph.length;
@@ -25,7 +25,7 @@ function bfs(rGraph, s, t, parent) {
   return visited[t] == true;
 }
 
-function fordFulkerson(graph, s, t) {
+export function fordFulkerson(graph, s, t) {
   if (s < 0 || t < 0 || s > graph.length - 1 || t > graph.length - 1) {
     throw new Error("Ford-Fulkerson-Maximum-Flow :: invalid sink or source");
   }
@@ -69,7 +69,7 @@ function fordFulkerson(graph, s, t) {
   };
 }
 
-function calculateFlowGraph(initialGraph, residualGraph) {
+export function calculateFlowGraph(initialGraph, residualGraph) {
   var flowGraph = [];
   for (var i = 0; i < initialGraph.length; i++) {
     var row = [];
@@ -81,11 +81,3 @@ function calculateFlowGraph(initialGraph, residualGraph) {
   }
   return flowGraph;
 }
-
-// Ejemplo de uso
-let s = 0; // Source
-let t = 5; // Sink
-
-let maxFlow = fordFulkerson(graph, s, t);
-var flowGraph = calculateFlowGraph(graph, maxFlow.rGraph);
-console.log(flowGraph, maxFlow.maxFlow);

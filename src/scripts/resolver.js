@@ -9,6 +9,7 @@ let resolveBy = [];
 
 export function executeResolver() {
   if (window.location.pathname !== "/") return;
+
   const dijkstraOption = document.querySelector("#Dijkstra-option input");
   const primOption = document.querySelector("#Prim-option input");
   const resetButton = document.querySelector("#reset-btn");

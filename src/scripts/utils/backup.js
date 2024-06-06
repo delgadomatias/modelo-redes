@@ -1,13 +1,18 @@
 import { Link, Node, SelfLink, StartLink } from "../elements/index.js";
-import { acceptedNodes, links, nodes } from "../main.js";
+import { Main } from "../main-dos.js";
 
-export function restoreBackup() {
+export function restoreBackup(name) {
+  const main = Main.getInstance();
+  main.nodes = [];
+  main.links = [];
+  main.acceptedNodes = [];
+
   if (!localStorage || !JSON) {
     return;
   }
 
   try {
-    const backup = JSON.parse(localStorage["fsm"]);
+    const backup = JSON.parse(localStorage.getItem(name));
 
     for (let i = 0; i < backup.nodes.length; i++) {
       const backupNode = backup.nodes[i];
@@ -15,31 +20,35 @@ export function restoreBackup() {
       node.isAcceptState = backupNode.isAcceptState;
       node.text = backupNode.text;
       if (node.isAcceptState) {
-        acceptedNodes.push(node);
+        main.addAcceptedNode(node);
       }
-      nodes.push(node);
+      main.addNode(node);
     }
+
     for (let i = 0; i < backup.links.length; i++) {
       const backupLink = backup.links[i];
       let link = null;
       if (backupLink.type === "SelfLink") {
-        link = new SelfLink(nodes[backupLink.node]);
+        link = new SelfLink(main.nodes[backupLink.node]);
         link.anchorAngle = backupLink.anchorAngle;
         link.text = backupLink.text;
       } else if (backupLink.type === "StartLink") {
-        link = new StartLink(nodes[backupLink.node]);
+        link = new StartLink(main.nodes[backupLink.node]);
         link.deltaX = backupLink.deltaX;
         link.deltaY = backupLink.deltaY;
         link.text = backupLink.text;
       } else if (backupLink.type === "Link") {
-        link = new Link(nodes[backupLink.nodeA], nodes[backupLink.nodeB]);
+        link = new Link(
+          main.nodes[backupLink.nodeA],
+          main.nodes[backupLink.nodeB],
+        );
         link.parallelPart = backupLink.parallelPart;
         link.perpendicularPart = backupLink.perpendicularPart;
         link.text = backupLink.text;
         link.lineAngleAdjust = backupLink.lineAngleAdjust;
       }
       if (link != null) {
-        links.push(link);
+        main.links.push(link);
       }
     }
   } catch (e) {
@@ -47,7 +56,9 @@ export function restoreBackup() {
   }
 }
 
-export function saveBackup() {
+export function saveBackup(name) {
+  const main = Main.getInstance();
+
   if (!localStorage || !JSON) {
     return;
   }
@@ -57,8 +68,8 @@ export function saveBackup() {
     links: [],
   };
 
-  for (let i = 0; i < nodes.length; i++) {
-    const node = nodes[i];
+  for (let i = 0; i < main.nodes.length; i++) {
+    const node = main.nodes[i];
     const backupNode = {
       x: node.x,
       y: node.y,
@@ -68,20 +79,20 @@ export function saveBackup() {
     backup.nodes.push(backupNode);
   }
 
-  for (let i = 0; i < links.length; i++) {
-    const link = links[i];
+  for (let i = 0; i < main.links.length; i++) {
+    const link = main.links[i];
     let backupLink = null;
     if (link instanceof SelfLink) {
       backupLink = {
         type: "SelfLink",
-        node: nodes.indexOf(link.node),
+        node: main.nodes.indexOf(link.node),
         text: link.text,
         anchorAngle: link.anchorAngle,
       };
     } else if (link instanceof StartLink) {
       backupLink = {
         type: "StartLink",
-        node: nodes.indexOf(link.node),
+        node: main.nodes.indexOf(link.node),
         text: link.text,
         deltaX: link.deltaX,
         deltaY: link.deltaY,
@@ -89,8 +100,8 @@ export function saveBackup() {
     } else if (link instanceof Link) {
       backupLink = {
         type: "Link",
-        nodeA: nodes.indexOf(link.nodeA),
-        nodeB: nodes.indexOf(link.nodeB),
+        nodeA: main.nodes.indexOf(link.nodeA),
+        nodeB: main.nodes.indexOf(link.nodeB),
         text: link.text,
         lineAngleAdjust: link.lineAngleAdjust,
         parallelPart: link.parallelPart,
@@ -102,5 +113,5 @@ export function saveBackup() {
     }
   }
 
-  localStorage["fsm"] = JSON.stringify(backup);
+  localStorage.setItem(name, JSON.stringify(backup));
 }

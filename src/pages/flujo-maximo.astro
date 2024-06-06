@@ -66,15 +66,35 @@ const options = [
   </div>
 </Layout>
 
+<!--<script>-->
+<!--  import { execute } from "../scripts/fm-main";-->
+<!--  import { executeResolver } from "../scripts/fm-resolver";-->
+
+<!--  function init() {-->
+<!--    execute();-->
+<!--    executeResolver();-->
+<!--  }-->
+
+<!--  document.addEventListener("astro:page-load", init);-->
+<!--  init();-->
+<!--</script>-->
+
 <script>
-  import { execute } from "../scripts/fm-main";
-  import { executeResolver } from "../scripts/fm-resolver";
+  import { Main } from "../scripts/main-dos";
+  import { restoreBackup, saveBackup } from "../scripts/utils";
+  import { Resolver } from "../resolver-dos";
 
   function init() {
-    execute();
-    executeResolver();
+    if (window.location.pathname !== "/flujo-maximo") return;
+
+    const main = Main.getInstance();
+    main.makeRestoreBackup("fm");
+    main.setSaveBackupFn(saveBackup);
+    main.startListeners(document.querySelector("#fm-canvas"));
+
+    const resolver = Resolver.getInstance();
+    resolver.runForMaxFlow();
   }
 
   document.addEventListener("astro:page-load", init);
-  init();
 </script>

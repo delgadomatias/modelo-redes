@@ -4,7 +4,7 @@ import { CheckboxGroup, Checkbox, Button, Divider } from "@nextui-org/react";
 
 const options = [
   {
-    name: "Prim",
+    name: "Kruskal",
   },
   {
     name: "Dijkstra",
@@ -17,7 +17,7 @@ const options = [
     class="max-w-[1440px] p-6 mx-auto w-full grid lg:grid-cols-12 items-center justify-center min-h-screen place-content-center"
   >
     <div class="col-span-12 mb-4 ml-2" transition:name="header">
-      <h2 class="text-5xl w-fit">Prim y Dijkstra</h2>
+      <h2 class="text-5xl w-fit">Kruskal y Dijkstra</h2>
     </div>
 
     <canvas
@@ -69,33 +69,23 @@ const options = [
         class="text-4xl underline underline-offset-2 cursor-pointer hover:text-red-500 w-fit transition-all duration-75 ease-linear"
         href="/flujo-maximo"
       >
-        Resolver Flujo Maximo
+        Resolver Flujo Máximo
       </a>
     </div>
   </div>
 
-  <div class="w-full flex items-center justify-center p-12 flex-col">
+  <div
+    class="w-full hidden items-center justify-center p-12 flex-col"
+    id="solutions-container"
+  >
     <h1 class="text-7xl font-bold mb-12">Soluciones</h1>
-    <div id="solutions-div" class="flex flex-col gap-8"></div>
+    <div id="solutions-div" class="flex flex-col gap-12"></div>
   </div>
 </Layout>
 
-<!--<script>-->
-<!--  import { execute } from "../scripts/main";-->
-<!--  import { executeResolver } from "../scripts/resolver";-->
-
-<!--  function init() {-->
-<!--    execute();-->
-<!--    executeResolver();-->
-<!--  }-->
-
-<!--  document.addEventListener("astro:page-load", init);-->
-<!--  init();-->
-<!--</script>-->
-
 <script>
-  import { Main } from "../scripts/main-dos";
-  import { Resolver } from "../resolver-dos";
+  import { Main } from "../scripts/main";
+  import { Resolver } from "../scripts/resolver";
   import { saveBackup } from "../scripts/utils";
 
   function init() {

@@ -1,15 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import { CheckboxGroup, Checkbox, Button, Divider } from "@nextui-org/react";
-
-const options = [
-  {
-    name: "Prim",
-  },
-  {
-    name: "Dijkstra",
-  },
-];
+import { Button, Divider } from "@nextui-org/react";
 ---
 
 <Layout>
@@ -17,7 +8,7 @@ const options = [
     class="max-w-[1440px] p-6 mx-auto w-full grid lg:grid-cols-12 items-center justify-center min-h-screen place-content-center"
   >
     <div class="col-span-12 mb-4 ml-2" transition:name="fm-header">
-      <h2 class="text-5xl w-fit ease-linear">Resolver Flujo Maximo</h2>
+      <h2 class="text-5xl w-fit ease-linear">Resolver Flujo Máximo</h2>
     </div>
     <canvas
       id="fm-canvas"
@@ -55,34 +46,24 @@ const options = [
         href="/"
         class="text-4xl underline underline-offset-2 cursor-pointer hover:text-red-500 w-fit transition-all duration-75 ease-linear"
       >
-        Prim y Dijkstra
+        Kruskal y Dijkstra
       </a>
     </div>
   </div>
 
-  <div class="w-full flex items-center justify-center p-12 flex-col">
+  <div
+    class="w-full hidden items-center justify-center p-12 flex-col"
+    id="fm-solutions-container"
+  >
     <h1 class="text-7xl font-bold mb-12">Soluciones</h1>
-    <div id="solutions-div" class="flex flex-col gap-8"></div>
+    <div id="fm-solutions-div" class="flex flex-col gap-8"></div>
   </div>
 </Layout>
 
-<!--<script>-->
-<!--  import { execute } from "../scripts/fm-main";-->
-<!--  import { executeResolver } from "../scripts/fm-resolver";-->
-
-<!--  function init() {-->
-<!--    execute();-->
-<!--    executeResolver();-->
-<!--  }-->
-
-<!--  document.addEventListener("astro:page-load", init);-->
-<!--  init();-->
-<!--</script>-->
-
 <script>
-  import { Main } from "../scripts/main-dos";
-  import { restoreBackup, saveBackup } from "../scripts/utils";
-  import { Resolver } from "../resolver-dos";
+  import { Main } from "../scripts/main";
+  import { saveBackup } from "../scripts/utils";
+  import { Resolver } from "../scripts/resolver";
 
   function init() {
     if (window.location.pathname !== "/flujo-maximo") return;

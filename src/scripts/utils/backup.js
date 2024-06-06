@@ -1,5 +1,5 @@
 import { Link, Node, SelfLink, StartLink } from "../elements/index.js";
-import { Main } from "../main-dos.js";
+import { Main } from "../main.js";
 
 export function restoreBackup(name) {
   const main = Main.getInstance();

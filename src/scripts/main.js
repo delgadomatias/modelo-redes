@@ -1,4 +1,3 @@
-import { restoreBackup, saveBackup } from "./utils/index.js";
 import {
   Link,
   Node,
@@ -6,103 +5,95 @@ import {
   StartLink,
   TemporaryLink,
 } from "./elements/index.js";
+import { restoreBackup } from "./utils/index.js";
 
-export let canvas;
-export let caretTimer;
-export let caretVisible = true;
-export let currentLink = null;
-export let hitTargetPadding = 6;
-export let links = [];
-export let movingObject = false;
-export let nodeRadius = 30;
-export let nodes = [];
-export let originalClick;
-export let selectedObject = null;
-export let shift = false;
-export let snapToPadding = 6;
-let key;
-let mouse;
-let targetNode;
-export let acceptedNodes = [];
-
-function canvasHasFocus() {
-  return (document.activeElement || document.body) === document.body;
-}
-
-function draw() {
-  if (!canvas) return;
-  drawUsing(canvas.getContext("2d"));
-  saveBackup();
-}
-
-function drawUsing(c) {
-  c.clearRect(0, 0, canvas.width, canvas.height);
-  c.save();
-  c.translate(0.5, 0.5);
-
-  for (let i = 0; i < nodes.length; i++) {
-    c.lineWidth = 1.7;
-    c.fillStyle = c.strokeStyle =
-      nodes[i] === selectedObject ? "#ff5924" : "white";
-    nodes[i].draw(c);
-  }
-
-  for (let i = 0; i < links.length; i++) {
-    c.lineWidth = 1.7;
-
-    c.fillStyle = c.strokeStyle =
-      links[i] === selectedObject ? "#ff5924" : "white";
-    links[i].draw(c);
-  }
-
-  if (currentLink != null) {
-    c.lineWidth = 1.7;
-    c.fillStyle = c.strokeStyle = "white";
-    currentLink.draw(c);
-  }
-
-  c.restore();
-}
-function drawOnCanvas(c, nodes, links) {
-  let i;
-  c.clearRect(0, 0, canvas.width, canvas.height);
-  c.save();
-  c.translate(0.5, 0.5);
-
-  for (i = 0; i < nodes.length; i++) {
-    c.lineWidth = 1.7;
-    c.fillStyle = c.strokeStyle =
-      nodes[i] === selectedObject ? "#ff5924" : "white";
-    nodes[i].draw(c);
-  }
-
-  for (i = 0; i < links.length; i++) {
-    c.lineWidth = 1.7;
-    c.fillStyle = c.strokeStyle =
-      links[i] === selectedObject ? "#ff5924" : "white";
-    links[i].draw(c);
-  }
-
-  if (currentLink != null) {
-    c.lineWidth = 1.7;
-    c.fillStyle = c.strokeStyle = "white";
-    currentLink.draw(c);
-  }
-
-  c.restore();
-}
-
-export function execute() {
-  nodes = [];
-  links = [];
+export class Main {
   acceptedNodes = [];
-  canvas = document.getElementById("canvas");
+  canvas;
+  caretTimer;
+  caretVisible = true;
+  currentLink = null;
+  hitTargetPadding = 6;
+  key;
+  links = [];
+  mouse;
+  movingObject = false;
+  nodeRadius = 30;
+  nodes = [];
+  originalClick;
+  selectedObject = null;
+  shift = false;
+  snapToPadding = 6;
+  targetNode;
+  saveBackupFn;
+  backupName = "";
 
-  function canvasHasFocus() {
-    return (document.activeElement || document.body) === document.body;
+  static instance;
+  static getInstance() {
+    if (!Main.instance) {
+      Main.instance = new Main();
+    }
+
+    return Main.instance;
   }
 
-  function drawText(c, text, x, y, angleOrNull, isSelected) {
+  setSaveBackupFn = (fn) => {
+    this.saveBackupFn = fn;
+  };
+
+  makeRestoreBackup(name) {
+    this.backupName = name;
+    restoreBackup(name);
+  }
+
+  addNode = (node) => {
+    this.nodes.push(node);
+  };
+
+  addAcceptedNode = (node) => {
+    this.acceptedNodes.push(node);
+  };
+
+  canvasHasFocus = () => {
+    return (document.activeElement || document.body) === document.body;
+  };
+
+  drawUsing = (c) => {
+    c.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    c.save();
+    c.translate(0.5, 0.5);
+
+    for (let i = 0; i < this.nodes.length; i++) {
+      c.lineWidth = 1.7;
+      c.fillStyle = c.strokeStyle =
+        this.nodes[i] === this.selectedObject ? "#ff5924" : "white";
+      this.nodes[i].draw(c);
+    }
+
+    for (let i = 0; i < this.links.length; i++) {
+      c.lineWidth = 1.7;
+
+      c.fillStyle = c.strokeStyle =
+        this.links[i] === this.selectedObject ? "#ff5924" : "white";
+      this.links[i].draw(c);
+    }
+
+    if (this.currentLink != null) {
+      c.lineWidth = 1.7;
+      c.fillStyle = c.strokeStyle = "white";
+      this.currentLink.draw(c);
+    }
+
+    c.restore();
+  };
+
+  draw = () => {
+    if (!this.canvas) return;
+    this.drawUsing(this.canvas.getContext("2d"));
+    this.saveBackupFn(this.backupName);
+  };
+
+  drawText = (c, text, x, y, angleOrNull, isSelected) => {
     c.font = '20px "Inter", serif';
     const width = c.measureText(text).width;
 
@@ -132,8 +123,8 @@ export function execute() {
 
       if (
         isSelected &&
-        caretVisible &&
-        canvasHasFocus() &&
+        this.caretVisible &&
+        this.canvasHasFocus() &&
         document.hasFocus()
       ) {
         x += width;
@@ -143,139 +134,97 @@ export function execute() {
         c.stroke();
       }
     }
-  }
+  };
 
-  function drawOnCanvas(c, nodes, links) {
+  drawOnCanvas = (c, nodes, links) => {
     let i;
-    c.clearRect(0, 0, canvas.width, canvas.height);
+    c.clearRect(0, 0, this.canvas.width, this.canvas.height);
     c.save();
     c.translate(0.5, 0.5);
 
     for (i = 0; i < nodes.length; i++) {
       c.lineWidth = 1.7;
       c.fillStyle = c.strokeStyle =
-        nodes[i] === selectedObject ? "#ff5924" : "white";
+        nodes[i] === this.selectedObject ? "#ff5924" : "white";
       nodes[i].draw(c);
     }
 
     for (i = 0; i < links.length; i++) {
       c.lineWidth = 1.7;
       c.fillStyle = c.strokeStyle =
-        links[i] === selectedObject ? "#ff5924" : "white";
+        links[i] === this.selectedObject ? "#ff5924" : "white";
       links[i].draw(c);
     }
 
-    if (currentLink != null) {
+    if (this.currentLink != null) {
       c.lineWidth = 1.7;
       c.fillStyle = c.strokeStyle = "white";
-      currentLink.draw(c);
+      this.currentLink.draw(c);
     }
 
     c.restore();
-  }
+  };
 
-  function drawSolution(c, nodes, links) {
-    drawOnCanvas(c, nodes, links);
-  }
+  drawSolution = (c, nodes, links) => {
+    this.drawOnCanvas(c, nodes, links);
+  };
 
-  function onReset() {
+  onReset = () => {
     const alert = confirm("¿Estás seguro de que deseas reiniciar el grafo?");
     if (alert) {
-      nodes = [];
-      links = [];
-      acceptedNodes = [];
-      document.querySelector("#solutions-div").innerHTML = "";
-      draw();
+      this.nodes = [];
+      this.links = [];
+      this.acceptedNodes = [];
+      if (document.querySelector("#solutions-div")) {
+        document.querySelector("#solutions-div").innerHTML = "";
+      }
+      this.draw();
     }
-  }
+  };
 
-  function drawUsing(c) {
-    c.clearRect(0, 0, canvas.width, canvas.height);
-    c.save();
-    c.translate(0.5, 0.5);
+  resetCaret = () => {
+    clearInterval(this.caretTimer);
+    this.caretVisible = !this.caretVisible;
+    this.caretTimer = setInterval(this.draw, 500);
+    this.caretVisible = true;
+  };
 
-    for (let i = 0; i < nodes.length; i++) {
-      c.lineWidth = 1.7;
-      c.fillStyle = c.strokeStyle =
-        nodes[i] === selectedObject ? "#ff5924" : "white";
-      nodes[i].draw(c);
-    }
-
-    for (let i = 0; i < links.length; i++) {
-      c.lineWidth = 1.7;
-
-      c.fillStyle = c.strokeStyle =
-        links[i] === selectedObject ? "#ff5924" : "white";
-      links[i].draw(c);
-    }
-
-    if (currentLink != null) {
-      c.lineWidth = 1.7;
-      c.fillStyle = c.strokeStyle = "white";
-      currentLink.draw(c);
-    }
-
-    c.restore();
-  }
-
-  function drawArrow(c, x, y, angle) {
-    const dx = Math.cos(angle);
-    const dy = Math.sin(angle);
-    c.beginPath();
-    c.moveTo(x, y);
-    c.lineTo(x - 8 * dx + 5 * dy, y - 8 * dy - 5 * dx);
-    c.lineTo(x - 8 * dx - 5 * dy, y - 8 * dy + 5 * dx);
-    c.fill();
-  }
-
-  function draw() {
-    if (!canvas) return;
-    drawUsing(canvas.getContext("2d"));
-    saveBackup();
-  }
-
-  function resetCaret() {
-    clearInterval(caretTimer);
-    caretVisible = !caretVisible;
-    caretTimer = setInterval(draw, 500);
-    caretVisible = true;
-  }
-
-  function selectObject(x, y) {
-    for (let i = 0; i < nodes.length; i++) {
-      if (nodes[i].containsPoint(x, y)) {
-        return nodes[i];
+  selectObject = (x, y) => {
+    for (let i = 0; i < this.nodes.length; i++) {
+      if (this.nodes[i].containsPoint(x, y)) {
+        return this.nodes[i];
       }
     }
 
-    for (let i = 0; i < links.length; i++) {
-      if (links[i].containsPoint(x, y)) {
-        return links[i];
+    for (let i = 0; i < this.links.length; i++) {
+      if (this.links[i].containsPoint(x, y)) {
+        return this.links[i];
       }
     }
+
     return null;
-  }
+  };
 
-  function snapNode(node) {
-    for (let i = 0; i < nodes.length; i++) {
-      if (nodes[i] === node) continue;
+  snapNode = (node) => {
+    for (let i = 0; i < this.nodes.length; i++) {
+      if (this.nodes[i] === node) continue;
 
-      if (Math.abs(node.x - nodes[i].x) < snapToPadding) {
-        node.x = nodes[i].x;
+      if (Math.abs(node.x - this.nodes[i].x) < this.snapToPadding) {
+        node.x = this.nodes[i].x;
       }
 
-      if (Math.abs(node.y - nodes[i].y) < snapToPadding) {
-        node.y = nodes[i].y;
+      if (Math.abs(node.y - this.nodes[i].y) < this.snapToPadding) {
+        node.y = this.nodes[i].y;
       }
     }
-  }
+  };
 
-  function crossBrowserKey(e) {
+  crossBrowserKey = (e) => {
     e = e || window.event;
     return e.which || e.keyCode;
-  }
+  };
 
-  function crossBrowserElementPos(e) {
+  crossBrowserElementPos = (e) => {
     e = e || window.event;
     let obj = e.target || e.srcElement;
     let x = 0,
@@ -286,9 +235,9 @@ export function execute() {
       obj = obj.offsetParent;
     }
     return { x: x, y: y };
-  }
+  };
 
-  function crossBrowserMousePos(e) {
+  crossBrowserMousePos = (e) => {
     e = e || window.event;
     return {
       x:
@@ -302,326 +251,277 @@ export function execute() {
           document.body.scrollTop +
           document.documentElement.scrollTop,
     };
-  }
+  };
 
-  function crossBrowserRelativeMousePos(e) {
-    const element = crossBrowserElementPos(e);
-    const mouse = crossBrowserMousePos(e);
+  drawArrow = (c, x, y, angle) => {
+    const dx = Math.cos(angle);
+    const dy = Math.sin(angle);
+    c.beginPath();
+    c.moveTo(x, y);
+    c.lineTo(x - 8 * dx + 5 * dy, y - 8 * dy - 5 * dx);
+    c.lineTo(x - 8 * dx - 5 * dy, y - 8 * dy + 5 * dx);
+    c.fill();
+  };
+
+  crossBrowserRelativeMousePos = (e) => {
+    const element = this.crossBrowserElementPos(e);
+    const mouse = this.crossBrowserMousePos(e);
     return {
       x: mouse.x - element.x,
       y: mouse.y - element.y,
     };
-  }
-
-  // Listeners
-  canvas = document.getElementById("canvas");
-  if (canvas) {
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-  }
-  restoreBackup();
-  draw();
-
-  if (!canvas) return;
-
-  canvas.onmousedown = function (e) {
-    mouse = crossBrowserRelativeMousePos(e);
-    selectedObject = selectObject(mouse.x, mouse.y);
-    movingObject = false;
-    originalClick = mouse;
-
-    if (selectedObject != null) {
-      if (shift && selectedObject instanceof Node) {
-        currentLink = new SelfLink(selectedObject, mouse);
-      } else {
-        movingObject = true;
-        if (selectedObject.setMouseStart) {
-          selectedObject.setMouseStart(mouse.x, mouse.y);
-        }
-      }
-      resetCaret();
-    } else if (shift) {
-      currentLink = new TemporaryLink(mouse, mouse);
-    }
-
-    draw();
-
-    if (canvasHasFocus()) {
-      // disable drag-and-drop only if the canvas is already focused
-      return false;
-    } else {
-      // otherwise, let the browser switch the focus away from wherever it was
-      resetCaret();
-      return true;
-    }
   };
 
-  canvas.ondblclick = function (e) {
-    mouse = crossBrowserRelativeMousePos(e);
-    selectedObject = selectObject(mouse.x, mouse.y);
+  startListeners = (canvas) => {
+    if (!canvas) return;
+    this.canvas = canvas;
 
-    if (selectedObject == null) {
-      selectedObject = new Node(mouse.x, mouse.y);
-      nodes.push(selectedObject);
-      resetCaret();
-      draw();
-    } else if (selectedObject instanceof Node) {
-      if (!selectedObject.isAcceptState) {
-        console.log(acceptedNodes);
-        if (acceptedNodes.length === 2) {
-          // Cambia el estado del último nodo aceptado a falso
-          let lastAcceptedNode = acceptedNodes[1];
-          lastAcceptedNode.isAcceptState = false;
+    if (this.canvas) {
+      this.canvas.width = canvas.offsetWidth;
+      this.canvas.height = canvas.offsetHeight;
+      this.startCanvasListeners();
+    }
 
-          // Elimina el último nodo de la lista de nodos aceptados
-          acceptedNodes = acceptedNodes.slice(0, 1);
+    this.draw();
+
+    document.onkeydown = (e) => {
+      this.key = this.crossBrowserKey(e);
+
+      if (this.key === 16) {
+        this.shift = true;
+      } else if (!this.canvasHasFocus()) {
+        // don't read keystrokes when other things have focus
+        return true;
+      } else if (this.key === 8) {
+        // backspace key
+        if (this.selectedObject != null && "text" in this.selectedObject) {
+          this.selectedObject.text = this.selectedObject.text.substr(
+            0,
+            this.selectedObject.text.length - 1,
+          );
+          this.resetCaret();
+          this.draw();
         }
 
-        // Agrega el nodo seleccionado a la lista de nodos aceptados
-        acceptedNodes.push(selectedObject);
-        selectedObject.isAcceptState = true;
-      } else {
-        // Si el nodo seleccionado ya es un nodo aceptado, cambia su estado a falso
-        selectedObject.isAcceptState = false;
-
-        // Elimina el nodo seleccionado de la lista de nodos aceptados
-        acceptedNodes = acceptedNodes.filter((node) => node !== selectedObject);
+        // backspace is a shortcut for the back button, but do NOT want to change pages
+        return false;
+      } else if (this.key === 46) {
+        // delete key
+        if (this.selectedObject != null) {
+          for (let i = 0; i < this.nodes.length; i++) {
+            if (this.nodes[i] === this.selectedObject) {
+              this.nodes.splice(i--, 1);
+            }
+          }
+          for (let i = 0; i < this.links.length; i++) {
+            if (
+              this.links[i] === this.selectedObject ||
+              this.links[i].node === this.selectedObject ||
+              this.links[i].nodeA === this.selectedObject ||
+              this.links[i].nodeB === this.selectedObject
+            ) {
+              this.links.splice(i--, 1);
+            }
+          }
+          this.selectedObject = null;
+          this.draw();
+        }
       }
+    };
+    document.onkeyup = (e) => {
+      this.key = this.crossBrowserKey(e);
 
-      draw();
-    }
+      if (this.key === 16) {
+        this.shift = false;
+      }
+    };
+
+    document.onkeypress = (e) => {
+      // don't read keystrokes when other things have focus
+      const allowSlash = window.location.pathname === "/flujo-maximo";
+      this.key = this.crossBrowserKey(e);
+
+      if (!this.canvasHasFocus()) {
+        // don't read keystrokes when other things have focus
+        return true;
+      } else if (
+        this.key >= 0x20 &&
+        this.key <= 0x7e &&
+        !e.metaKey &&
+        !e.altKey &&
+        !e.ctrlKey &&
+        this.selectedObject != null &&
+        "text" in this.selectedObject
+      ) {
+        // Allow only numbers and slash
+        if (!(this.selectedObject instanceof Node)) {
+          if ((this.key < 48 || this.key > 57) && this.key !== 47) {
+            return false;
+          }
+        }
+
+        if (this.key === 47 && !allowSlash) {
+          // disallow slashes unless in the max flow page
+          return false;
+        }
+
+        // Count the number of slash (allow only one per link)
+        if (this.key === 47) {
+          let slashCount = 0;
+          for (let i = 0; i < this.selectedObject.text.length; i++) {
+            if (this.selectedObject.text[i] === "/") {
+              slashCount++;
+            }
+          }
+
+          if (slashCount >= 1) {
+            return false;
+          }
+        }
+
+        this.selectedObject.text += String.fromCharCode(this.key);
+        this.resetCaret();
+        this.draw();
+
+        // don't let keys do their actions (like space scrolls down the page)
+        return false;
+      } else if (this.key === 8) {
+        // backspace is a shortcut for the back button, but do NOT want to change pages
+        return false;
+      }
+    };
   };
 
-  canvas.onmousemove = function (e) {
-    mouse = crossBrowserRelativeMousePos(e);
+  startCanvasListeners = () => {
+    this.canvas.onmousedown = (e) => {
+      this.mouse = this.crossBrowserRelativeMousePos(e);
+      this.selectedObject = this.selectObject(this.mouse.x, this.mouse.y);
+      this.movingObject = false;
+      this.originalClick = this.mouse;
 
-    if (currentLink != null) {
-      targetNode = selectObject(mouse.x, mouse.y);
-      if (!(targetNode instanceof Node)) {
-        targetNode = null;
+      if (this.selectedObject != null) {
+        if (this.shift && this.selectedObject instanceof Node) {
+          this.currentLink = new SelfLink(this.selectedObject, this.mouse);
+        } else {
+          this.movingObject = true;
+          if (this.selectedObject.setMouseStart) {
+            this.selectedObject.setMouseStart(this.mouse.x, this.mouse.y);
+          }
+        }
+        this.resetCaret();
+      } else if (this.shift) {
+        this.currentLink = new TemporaryLink(this.mouse, this.mouse);
       }
 
-      if (selectedObject == null) {
-        if (targetNode != null) {
-          currentLink = new StartLink(targetNode, originalClick);
-        } else {
-          currentLink = new TemporaryLink(originalClick, mouse);
-        }
+      this.draw();
+
+      if (this.canvasHasFocus()) {
+        // disable drag-and-drop only if the canvas is already focused
+        return false;
       } else {
-        if (targetNode === selectedObject) {
-          currentLink = new SelfLink(selectedObject, mouse);
-        } else if (targetNode != null) {
-          currentLink = new Link(selectedObject, targetNode);
+        // otherwise, let the browser switch the focus away from wherever it was
+        this.resetCaret();
+        return true;
+      }
+    };
+
+    this.canvas.ondblclick = (e) => {
+      this.mouse = this.crossBrowserRelativeMousePos(e);
+      this.selectedObject = this.selectObject(this.mouse.x, this.mouse.y);
+
+      if (this.selectedObject == null) {
+        this.selectedObject = new Node(this.mouse.x, this.mouse.y);
+        this.nodes.push(this.selectedObject);
+        this.resetCaret();
+        this.draw();
+      } else if (this.selectedObject instanceof Node) {
+        if (!this.selectedObject.isAcceptState) {
+          if (this.acceptedNodes.length === 2) {
+            // Cambia el estado del último nodo aceptado a falso
+            let lastAcceptedNode = this.acceptedNodes[1];
+            lastAcceptedNode.isAcceptState = false;
+
+            // Elimina el último nodo de la lista de nodos aceptados
+            this.acceptedNodes = this.acceptedNodes.slice(0, 1);
+          }
+
+          // Agrega el nodo seleccionado a la lista de nodos aceptados
+          this.acceptedNodes.push(this.selectedObject);
+          this.selectedObject.isAcceptState = true;
         } else {
-          currentLink = new TemporaryLink(
-            selectedObject.closestPointOnCircle(mouse.x, mouse.y),
-            mouse,
+          // Si el nodo seleccionado ya es un nodo aceptado, cambia su estado a falso
+          this.selectedObject.isAcceptState = false;
+
+          // Elimina el nodo seleccionado de la lista de nodos aceptados
+          this.acceptedNodes = this.acceptedNodes.filter(
+            (node) => node !== this.selectedObject,
           );
         }
+
+        this.draw();
       }
-      draw();
-    }
+    };
 
-    if (movingObject) {
-      selectedObject.setAnchorPoint(mouse.x, mouse.y);
-      if (selectedObject instanceof Node) {
-        snapNode(selectedObject);
-      }
-      draw();
-    }
-  };
+    this.canvas.onmousemove = (e) => {
+      this.mouse = this.crossBrowserRelativeMousePos(e);
 
-  canvas.onmouseup = function () {
-    movingObject = false;
+      if (this.currentLink != null) {
+        this.targetNode = this.selectObject(this.mouse.x, this.mouse.y);
+        if (!(this.targetNode instanceof Node)) {
+          this.targetNode = null;
+        }
 
-    if (currentLink != null) {
-      if (!(currentLink instanceof TemporaryLink)) {
-        selectedObject = currentLink;
-        links.push(currentLink);
-        resetCaret();
-      }
-      currentLink = null;
-      draw();
-    }
-  };
-  // };
-
-  shift = false;
-
-  document.onkeydown = function (e) {
-    key = crossBrowserKey(e);
-
-    if (key === 16) {
-      shift = true;
-    } else if (!canvasHasFocus()) {
-      // don't read keystrokes when other things have focus
-      return true;
-    } else if (key === 8) {
-      // backspace key
-      if (selectedObject != null && "text" in selectedObject) {
-        selectedObject.text = selectedObject.text.substr(
-          0,
-          selectedObject.text.length - 1,
-        );
-        resetCaret();
-        draw();
-      }
-
-      // backspace is a shortcut for the back button, but do NOT want to change pages
-      return false;
-    } else if (key === 46) {
-      // delete key
-      if (selectedObject != null) {
-        for (let i = 0; i < nodes.length; i++) {
-          if (nodes[i] == selectedObject) {
-            nodes.splice(i--, 1);
+        if (this.selectedObject == null) {
+          if (this.targetNode != null) {
+            this.currentLink = new StartLink(
+              this.targetNode,
+              this.originalClick,
+            );
+          } else {
+            this.currentLink = new TemporaryLink(
+              this.originalClick,
+              this.mouse,
+            );
+          }
+        } else {
+          if (this.targetNode === this.selectedObject) {
+            this.currentLink = new SelfLink(this.selectedObject, this.mouse);
+          } else if (this.targetNode != null) {
+            this.currentLink = new Link(this.selectedObject, this.targetNode);
+          } else {
+            this.currentLink = new TemporaryLink(
+              this.selectedObject.closestPointOnCircle(
+                this.mouse.x,
+                this.mouse.y,
+              ),
+              this.mouse,
+            );
           }
         }
-        for (let i = 0; i < links.length; i++) {
-          if (
-            links[i] === selectedObject ||
-            links[i].node === selectedObject ||
-            links[i].nodeA === selectedObject ||
-            links[i].nodeB === selectedObject
-          ) {
-            links.splice(i--, 1);
-          }
-        }
-        selectedObject = null;
-        draw();
+        this.draw();
       }
-    }
+
+      if (this.movingObject) {
+        this.selectedObject.setAnchorPoint(this.mouse.x, this.mouse.y);
+        if (this.selectedObject instanceof Node) {
+          this.snapNode(this.selectedObject);
+        }
+        this.draw();
+      }
+    };
+
+    this.canvas.onmouseup = () => {
+      this.movingObject = false;
+
+      if (this.currentLink != null) {
+        if (!(this.currentLink instanceof TemporaryLink)) {
+          this.selectedObject = this.currentLink;
+          this.links.push(this.currentLink);
+          this.resetCaret();
+        }
+        this.currentLink = null;
+        this.draw();
+      }
+    };
   };
-
-  document.onkeyup = function (e) {
-    key = crossBrowserKey(e);
-
-    if (key === 16) {
-      shift = false;
-    }
-  };
-
-  document.onkeypress = function (e) {
-    // don't read keystrokes when other things have focus
-    key = crossBrowserKey(e);
-    if (!canvasHasFocus()) {
-      // don't read keystrokes when other things have focus
-      return true;
-    } else if (
-      key >= 0x20 &&
-      key <= 0x7e &&
-      !e.metaKey &&
-      !e.altKey &&
-      !e.ctrlKey &&
-      selectedObject != null &&
-      "text" in selectedObject
-    ) {
-      selectedObject.text += String.fromCharCode(key);
-      resetCaret();
-      draw();
-
-      // don't let keys do their actions (like space scrolls down the page)
-      return false;
-    } else if (key === 8) {
-      // backspace is a shortcut for the back button, but do NOT want to change pages
-      return false;
-    }
-  };
-
-  // document.addEventListener("keypress", (e) => {
-  //   key = crossBrowserKey(e);
-  //   if (!canvasHasFocus()) {
-  //     return true;
-  //   }
-  //
-  //   if (
-  //     key >= 0x20 &&
-  //     key <= 0x7e &&
-  //     !e.metaKey &&
-  //     !e.altKey &&
-  //     !e.ctrlKey &&
-  //     selectedObject != null
-  //   ) {
-  //     if (selectedObject instanceof Link) {
-  //       if (shift) {
-  //         // Editar el texto en el final de la relación
-  //         selectedObject.textEnd += String.fromCharCode(key);
-  //       } else {
-  //         // Editar el texto en el inicio de la relación
-  //         selectedObject.textStart += String.fromCharCode(key);
-  //       }
-  //       resetCaret();
-  //       draw();
-  //       return false;
-  //     } else if ("text" in selectedObject) {
-  //       selectedObject.text += String.fromCharCode(key);
-  //       resetCaret();
-  //       draw();
-  //       return false;
-  //     }
-  //   } else if (key === 8) {
-  //     // Evitar que la tecla de retroceso (backspace) realice su acción predeterminada
-  //     return false;
-  //   }
-  // });
-}
-
-export function drawText(c, text, x, y, angleOrNull, isSelected) {
-  c.font = '20px "Inter", serif';
-  const width = c.measureText(text).width;
-
-  // Center the text
-  x -= width / 2;
-
-  // Position the text intelligently if given an angle
-  if (angleOrNull != null) {
-    let cos = Math.cos(angleOrNull);
-    let sin = Math.sin(angleOrNull);
-    let cornerPointX = (width / 2 + 5) * (cos > 0 ? 1 : -1);
-    let cornerPointY = (10 + 5) * (sin > 0 ? 1 : -1);
-    let slide =
-      sin * Math.pow(Math.abs(sin), 40) * cornerPointX -
-      cos * Math.pow(Math.abs(cos), 10) * cornerPointY;
-    x += cornerPointX - sin * slide;
-    y += cornerPointY + cos * slide;
-  }
-
-  // Draw text and caret (round the coordinates so the caret falls on a pixel)
-  if ("advancedFillText" in c) {
-    c.advancedFillText(text, text, x + width / 2, y, angleOrNull);
-  } else {
-    x = Math.round(x);
-    y = Math.round(y);
-    c.fillText(text, x, y + 6);
-
-    if (isSelected && caretVisible && canvasHasFocus() && document.hasFocus()) {
-      x += width;
-      c.beginPath();
-      c.moveTo(x, y - 10);
-      c.lineTo(x, y + 10);
-      c.stroke();
-    }
-  }
-}
-export function drawArrow(c, x, y, angle) {
-  const dx = Math.cos(angle);
-  const dy = Math.sin(angle);
-  c.beginPath();
-  c.moveTo(x, y);
-  c.lineTo(x - 8 * dx + 5 * dy, y - 8 * dy - 5 * dx);
-  c.lineTo(x - 8 * dx - 5 * dy, y - 8 * dy + 5 * dx);
-  c.fill();
-}
-export function drawSolution(c, nodes, links) {
-  drawOnCanvas(c, nodes, links);
-}
-export function onReset() {
-  const alert = confirm("¿Estás seguro de que deseas reiniciar el grafo?");
-  if (alert) {
-    nodes = [];
-    links = [];
-    acceptedNodes = [];
-    document.querySelector("#solutions-div").innerHTML = "";
-    draw();
-  }
 }

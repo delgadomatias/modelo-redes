@@ -3,7 +3,7 @@ import {
   hitTargetPadding,
   nodeRadius,
   selectedObject,
-} from "../main.js";
+} from "../main-old.js";
 
 export class SelfLink {
   constructor(node, mouse) {

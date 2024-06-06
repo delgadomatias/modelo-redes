@@ -1,4 +1,4 @@
-import { Main } from "../main-dos.js";
+import { Main } from "../main.js";
 
 export class Node {
   constructor(x, y) {

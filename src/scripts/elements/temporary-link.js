@@ -1,4 +1,4 @@
-import { drawArrow } from "../main.js";
+import { drawArrow } from "../main-old.js";
 
 export class TemporaryLink {
   constructor(from, to) {

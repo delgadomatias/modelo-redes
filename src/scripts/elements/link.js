@@ -1,5 +1,5 @@
 import { circleFromThreePoints } from "../utils";
-import { Main } from "../main-dos.js";
+import { Main } from "../main.js";
 
 export class Link {
   constructor(a, b) {
@@ -124,11 +124,21 @@ export class Link {
     }
     c.stroke();
     // draw the head of the arrow
-    // if(stuff.hasCircle) {
-    //     drawArrow(c, stuff.endX, stuff.endY, stuff.endAngle - stuff.reverseScale * (Math.PI / 2));
-    // } else {
-    //     drawArrow(c, stuff.endX, stuff.endY, Math.atan2(stuff.endY - stuff.startY, stuff.endX - stuff.startX));
-    // }
+    if (stuff.hasCircle) {
+      this.main.drawArrow(
+        c,
+        stuff.endX,
+        stuff.endY,
+        stuff.endAngle - stuff.reverseScale * (Math.PI / 2),
+      );
+    } else {
+      this.main.drawArrow(
+        c,
+        stuff.endX,
+        stuff.endY,
+        Math.atan2(stuff.endY - stuff.startY, stuff.endX - stuff.startX),
+      );
+    }
 
     // draw the text
     if (stuff.hasCircle) {

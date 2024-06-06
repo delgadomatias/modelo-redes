@@ -129,6 +129,15 @@ export class WeightedGraph {
         }
       }
     }
+
+    const sumWeight = path.reduce((acc, node) => {
+      return (
+        acc +
+        this.adjacencyList[node].find((n) => n.node === previous[node]).weight
+      );
+    }, 0);
+
+    return { path: path.concat(smallest).reverse(), sumWeight };
     return path.concat(smallest).reverse();
   }
 }

@@ -1,4 +1,4 @@
-import { Main } from "../main-dos.js";
+import { Main } from "../main.js";
 
 export class StartLink {
   constructor(node, start) {

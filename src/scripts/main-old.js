@@ -1,11 +1,11 @@
+import { restoreBackup, saveBackup } from "./utils/index.js";
 import {
-  FMLink,
-  FmNode,
-  FmSelfLink,
-  FmStartLink,
-  FmTemporaryLink,
-} from "./elements/fm";
-import { restoreBackup, saveBackup } from "./utils/fm-backup.js";
+  Link,
+  Node,
+  SelfLink,
+  StartLink,
+  TemporaryLink,
+} from "./elements/index.js";
 
 export let canvas;
 export let caretTimer;
@@ -24,10 +24,44 @@ let key;
 let mouse;
 let targetNode;
 export let acceptedNodes = [];
-export let editingEndText = false;
 
 function canvasHasFocus() {
   return (document.activeElement || document.body) === document.body;
+}
+
+function draw() {
+  if (!canvas) return;
+  drawUsing(canvas.getContext("2d"));
+  saveBackup();
+}
+
+function drawUsing(c) {
+  c.clearRect(0, 0, canvas.width, canvas.height);
+  c.save();
+  c.translate(0.5, 0.5);
+
+  for (let i = 0; i < nodes.length; i++) {
+    c.lineWidth = 1.7;
+    c.fillStyle = c.strokeStyle =
+      nodes[i] === selectedObject ? "#ff5924" : "white";
+    nodes[i].draw(c);
+  }
+
+  for (let i = 0; i < links.length; i++) {
+    c.lineWidth = 1.7;
+
+    c.fillStyle = c.strokeStyle =
+      links[i] === selectedObject ? "#ff5924" : "white";
+    links[i].draw(c);
+  }
+
+  if (currentLink != null) {
+    c.lineWidth = 1.7;
+    c.fillStyle = c.strokeStyle = "white";
+    currentLink.draw(c);
+  }
+
+  c.restore();
 }
 function drawOnCanvas(c, nodes, links) {
   let i;
@@ -57,46 +91,16 @@ function drawOnCanvas(c, nodes, links) {
 
   c.restore();
 }
-function draw() {
-  if (!canvas) return;
-  canvas = document.getElementById("fm-canvas");
-  drawUsing(canvas.getContext("2d"));
-  saveBackup();
-}
-function drawUsing(c) {
-  c.clearRect(0, 0, canvas.width, canvas.height);
-  c.save();
-  c.translate(0.5, 0.5);
-
-  for (let i = 0; i < nodes.length; i++) {
-    c.lineWidth = 1.7;
-    c.fillStyle = c.strokeStyle =
-      nodes[i] === selectedObject ? "#ff5924" : "white";
-    nodes[i].draw(c);
-  }
-
-  for (let i = 0; i < links.length; i++) {
-    c.lineWidth = 1.7;
-
-    c.fillStyle = c.strokeStyle =
-      links[i] === selectedObject ? "#ff5924" : "white";
-    links[i].draw(c);
-  }
-
-  if (currentLink != null) {
-    c.lineWidth = 1.7;
-    c.fillStyle = c.strokeStyle = "white";
-    currentLink.draw(c);
-  }
-
-  c.restore();
-}
 
 export function execute() {
   nodes = [];
   links = [];
   acceptedNodes = [];
-  canvas = document.getElementById("fm-canvas");
+  canvas = document.getElementById("canvas");
+
+  function canvasHasFocus() {
+    return (document.activeElement || document.body) === document.body;
+  }
 
   function drawText(c, text, x, y, angleOrNull, isSelected) {
     c.font = '20px "Inter", serif';
@@ -225,7 +229,7 @@ export function execute() {
   }
 
   function draw() {
-    // if (!canvas) return;
+    if (!canvas) return;
     drawUsing(canvas.getContext("2d"));
     saveBackup();
   }
@@ -233,9 +237,7 @@ export function execute() {
   function resetCaret() {
     clearInterval(caretTimer);
     caretVisible = !caretVisible;
-    caretTimer = setInterval(() => {
-      draw();
-    }, 500);
+    caretTimer = setInterval(draw, 500);
     caretVisible = true;
   }
 
@@ -312,8 +314,7 @@ export function execute() {
   }
 
   // Listeners
-
-  canvas = document.getElementById("fm-canvas");
+  canvas = document.getElementById("canvas");
   if (canvas) {
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
@@ -322,6 +323,7 @@ export function execute() {
   draw();
 
   if (!canvas) return;
+
   canvas.onmousedown = function (e) {
     mouse = crossBrowserRelativeMousePos(e);
     selectedObject = selectObject(mouse.x, mouse.y);
@@ -329,8 +331,8 @@ export function execute() {
     originalClick = mouse;
 
     if (selectedObject != null) {
-      if (shift && selectedObject instanceof FmNode) {
-        currentLink = new FmSelfLink(selectedObject, mouse);
+      if (shift && selectedObject instanceof Node) {
+        currentLink = new SelfLink(selectedObject, mouse);
       } else {
         movingObject = true;
         if (selectedObject.setMouseStart) {
@@ -339,7 +341,7 @@ export function execute() {
       }
       resetCaret();
     } else if (shift) {
-      currentLink = new FmTemporaryLink(mouse, mouse);
+      currentLink = new TemporaryLink(mouse, mouse);
     }
 
     draw();
@@ -359,11 +361,11 @@ export function execute() {
     selectedObject = selectObject(mouse.x, mouse.y);
 
     if (selectedObject == null) {
-      selectedObject = new FmNode(mouse.x, mouse.y);
+      selectedObject = new Node(mouse.x, mouse.y);
       nodes.push(selectedObject);
       resetCaret();
       draw();
-    } else if (selectedObject instanceof FmNode) {
+    } else if (selectedObject instanceof Node) {
       if (!selectedObject.isAcceptState) {
         console.log(acceptedNodes);
         if (acceptedNodes.length === 2) {
@@ -387,10 +389,6 @@ export function execute() {
       }
 
       draw();
-    } else if (selectedObject instanceof FMLink) {
-      // Alternar entre editar el texto de inicio o el texto de fin
-      editingEndText = !editingEndText;
-      resetCaret();
     }
   };
 
@@ -399,23 +397,23 @@ export function execute() {
 
     if (currentLink != null) {
       targetNode = selectObject(mouse.x, mouse.y);
-      if (!(targetNode instanceof FmNode)) {
+      if (!(targetNode instanceof Node)) {
         targetNode = null;
       }
 
       if (selectedObject == null) {
         if (targetNode != null) {
-          currentLink = new FmStartLink(targetNode, originalClick);
+          currentLink = new StartLink(targetNode, originalClick);
         } else {
-          currentLink = new FmTemporaryLink(originalClick, mouse);
+          currentLink = new TemporaryLink(originalClick, mouse);
         }
       } else {
         if (targetNode === selectedObject) {
-          currentLink = new FmSelfLink(selectedObject, mouse);
+          currentLink = new SelfLink(selectedObject, mouse);
         } else if (targetNode != null) {
-          currentLink = new FMLink(selectedObject, targetNode);
+          currentLink = new Link(selectedObject, targetNode);
         } else {
-          currentLink = new FmTemporaryLink(
+          currentLink = new TemporaryLink(
             selectedObject.closestPointOnCircle(mouse.x, mouse.y),
             mouse,
           );
@@ -425,10 +423,8 @@ export function execute() {
     }
 
     if (movingObject) {
-      console.log(mouse.x, mouse.y);
       selectedObject.setAnchorPoint(mouse.x, mouse.y);
-      console.log(selectedObject);
-      if (selectedObject instanceof FmNode) {
+      if (selectedObject instanceof Node) {
         snapNode(selectedObject);
       }
       draw();
@@ -439,7 +435,7 @@ export function execute() {
     movingObject = false;
 
     if (currentLink != null) {
-      if (!(currentLink instanceof FmTemporaryLink)) {
+      if (!(currentLink instanceof TemporaryLink)) {
         selectedObject = currentLink;
         links.push(currentLink);
         resetCaret();
@@ -448,6 +444,7 @@ export function execute() {
       draw();
     }
   };
+  // };
 
   shift = false;
 
@@ -462,20 +459,10 @@ export function execute() {
     } else if (key === 8) {
       // backspace key
       if (selectedObject != null && "text" in selectedObject) {
-        if (editingEndText) {
-          selectedObject.textEnd = selectedObject.textEnd.slice(0, -1);
-        } else {
-          selectedObject.textStart = selectedObject.textStart.slice(0, -1);
-        }
-
-        resetCaret();
-        draw();
-      } else if (selectedObject instanceof FMLink) {
-        if (editingEndText) {
-          selectedObject.textEnd = selectedObject.textEnd.slice(0, -1);
-        } else {
-          selectedObject.textStart = selectedObject.textStart.slice(0, -1);
-        }
+        selectedObject.text = selectedObject.text.substr(
+          0,
+          selectedObject.text.length - 1,
+        );
         resetCaret();
         draw();
       }
@@ -486,7 +473,7 @@ export function execute() {
       // delete key
       if (selectedObject != null) {
         for (let i = 0; i < nodes.length; i++) {
-          if (nodes[i] === selectedObject) {
+          if (nodes[i] == selectedObject) {
             nodes.splice(i--, 1);
           }
         }
@@ -503,15 +490,6 @@ export function execute() {
         selectedObject = null;
         draw();
       }
-    } else if (key === 9) {
-      // Tecla Tab
-      // Alternar entre el texto inicial y final de la relación
-      if (selectedObject instanceof FMLink) {
-        editingEndText = !editingEndText;
-        resetCaret();
-        draw();
-        e.preventDefault(); // Prevenir el comportamiento por defecto de la tecla Tab
-      }
     }
   };
 
@@ -524,40 +502,68 @@ export function execute() {
   };
 
   document.onkeypress = function (e) {
+    // don't read keystrokes when other things have focus
     key = crossBrowserKey(e);
     if (!canvasHasFocus()) {
+      // don't read keystrokes when other things have focus
       return true;
-    }
-
-    if (
+    } else if (
       key >= 0x20 &&
       key <= 0x7e &&
       !e.metaKey &&
       !e.altKey &&
       !e.ctrlKey &&
-      selectedObject != null
+      selectedObject != null &&
+      "text" in selectedObject
     ) {
-      if (selectedObject instanceof FMLink) {
-        if (editingEndText) {
-          // Editar el texto en el final de la relación
-          selectedObject.textEnd += String.fromCharCode(key);
-        } else {
-          // Editar el texto en el inicio de la relación
-          selectedObject.textStart += String.fromCharCode(key);
-        }
-        resetCaret();
-        draw();
-        return false;
-      } else if ("text" in selectedObject) {
-        selectedObject.text += String.fromCharCode(key);
-        resetCaret();
-        draw();
-        return false;
-      }
+      selectedObject.text += String.fromCharCode(key);
+      resetCaret();
+      draw();
+
+      // don't let keys do their actions (like space scrolls down the page)
+      return false;
     } else if (key === 8) {
+      // backspace is a shortcut for the back button, but do NOT want to change pages
       return false;
     }
   };
+
+  // document.addEventListener("keypress", (e) => {
+  //   key = crossBrowserKey(e);
+  //   if (!canvasHasFocus()) {
+  //     return true;
+  //   }
+  //
+  //   if (
+  //     key >= 0x20 &&
+  //     key <= 0x7e &&
+  //     !e.metaKey &&
+  //     !e.altKey &&
+  //     !e.ctrlKey &&
+  //     selectedObject != null
+  //   ) {
+  //     if (selectedObject instanceof Link) {
+  //       if (shift) {
+  //         // Editar el texto en el final de la relación
+  //         selectedObject.textEnd += String.fromCharCode(key);
+  //       } else {
+  //         // Editar el texto en el inicio de la relación
+  //         selectedObject.textStart += String.fromCharCode(key);
+  //       }
+  //       resetCaret();
+  //       draw();
+  //       return false;
+  //     } else if ("text" in selectedObject) {
+  //       selectedObject.text += String.fromCharCode(key);
+  //       resetCaret();
+  //       draw();
+  //       return false;
+  //     }
+  //   } else if (key === 8) {
+  //     // Evitar que la tecla de retroceso (backspace) realice su acción predeterminada
+  //     return false;
+  //   }
+  // });
 }
 
 export function drawText(c, text, x, y, angleOrNull, isSelected) {
@@ -597,6 +603,15 @@ export function drawText(c, text, x, y, angleOrNull, isSelected) {
     }
   }
 }
+export function drawArrow(c, x, y, angle) {
+  const dx = Math.cos(angle);
+  const dy = Math.sin(angle);
+  c.beginPath();
+  c.moveTo(x, y);
+  c.lineTo(x - 8 * dx + 5 * dy, y - 8 * dy - 5 * dx);
+  c.lineTo(x - 8 * dx - 5 * dy, y - 8 * dy + 5 * dx);
+  c.fill();
+}
 export function drawSolution(c, nodes, links) {
   drawOnCanvas(c, nodes, links);
 }
@@ -609,13 +624,4 @@ export function onReset() {
     document.querySelector("#solutions-div").innerHTML = "";
     draw();
   }
-}
-export function drawArrow(c, x, y, angle) {
-  const dx = Math.cos(angle);
-  const dy = Math.sin(angle);
-  c.beginPath();
-  c.moveTo(x, y);
-  c.lineTo(x - 8 * dx + 5 * dy, y - 8 * dy - 5 * dx);
-  c.lineTo(x - 8 * dx - 5 * dy, y - 8 * dy + 5 * dx);
-  c.fill();
 }

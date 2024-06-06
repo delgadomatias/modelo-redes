@@ -1,10 +1,8 @@
-import { FMLink, FmNode, FmSelfLink, FmStartLink } from "../elements/fm";
-import { FmMain } from "../fm-main-dos.js";
-
-// import { acceptedNodes, links, nodes } from "../main.js";
+import { Link, Node, SelfLink, StartLink } from "../elements/index.js";
+import { Main } from "../main-dos.js";
 
 export function restoreBackup() {
-  const main = FmMain.getInstance();
+  const main = Main.getInstance();
 
   if (!localStorage || !JSON) {
     return;
@@ -15,7 +13,7 @@ export function restoreBackup() {
 
     for (let i = 0; i < backup.nodes.length; i++) {
       const backupNode = backup.nodes[i];
-      const node = new FmNode(backupNode.x, backupNode.y);
+      const node = new Node(backupNode.x, backupNode.y);
       node.isAcceptState = backupNode.isAcceptState;
       node.text = backupNode.text;
       if (node.isAcceptState) {
@@ -27,26 +25,23 @@ export function restoreBackup() {
     for (let i = 0; i < backup.links.length; i++) {
       const backupLink = backup.links[i];
       let link = null;
-      if (backupLink.type === "FmSelfLink") {
-        link = new FmSelfLink(main.nodes[backupLink.node]);
+      if (backupLink.type === "SelfLink") {
+        link = new SelfLink(main.nodes[backupLink.node]);
         link.anchorAngle = backupLink.anchorAngle;
-        link.textStart = backupLink.textStart;
-        link.textEnd = backupLink.textEnd;
-      } else if (backupLink.type === "FmStartLink") {
-        link = new FmStartLink(main.nodes[backupLink.node]);
+        link.text = backupLink.text;
+      } else if (backupLink.type === "StartLink") {
+        link = new StartLink(main.nodes[backupLink.node]);
         link.deltaX = backupLink.deltaX;
         link.deltaY = backupLink.deltaY;
-        link.textStart = backupLink.textStart;
-        link.textEnd = backupLink.textEnd;
-      } else if (backupLink.type === "FMLink") {
-        link = new FMLink(
+        link.text = backupLink.text;
+      } else if (backupLink.type === "Link") {
+        link = new Link(
           main.nodes[backupLink.nodeA],
           main.nodes[backupLink.nodeB],
         );
         link.parallelPart = backupLink.parallelPart;
         link.perpendicularPart = backupLink.perpendicularPart;
-        link.textStart = backupLink.textStart;
-        link.textEnd = backupLink.textEnd;
+        link.text = backupLink.text;
         link.lineAngleAdjust = backupLink.lineAngleAdjust;
       }
       if (link != null) {
@@ -54,12 +49,12 @@ export function restoreBackup() {
       }
     }
   } catch (e) {
-    localStorage["fm"] = "";
+    localStorage["fsm"] = "";
   }
 }
 
 export function saveBackup() {
-  const main = FmMain.getInstance();
+  const main = Main.getInstance();
 
   if (!localStorage || !JSON) {
     return;
@@ -80,33 +75,31 @@ export function saveBackup() {
     };
     backup.nodes.push(backupNode);
   }
+
   for (let i = 0; i < main.links.length; i++) {
     const link = main.links[i];
     let backupLink = null;
-    if (link instanceof FmSelfLink) {
+    if (link instanceof SelfLink) {
       backupLink = {
-        type: "FmSelfLink",
+        type: "SelfLink",
         node: main.nodes.indexOf(link.node),
-        textStart: link.textStart,
-        textEnd: link.textEnd,
+        text: link.text,
         anchorAngle: link.anchorAngle,
       };
-    } else if (link instanceof FmStartLink) {
+    } else if (link instanceof StartLink) {
       backupLink = {
-        type: "FmStartLink",
+        type: "StartLink",
         node: main.nodes.indexOf(link.node),
-        textStart: link.textStart,
-        textEnd: link.textEnd,
+        text: link.text,
         deltaX: link.deltaX,
         deltaY: link.deltaY,
       };
-    } else if (link instanceof FMLink) {
+    } else if (link instanceof Link) {
       backupLink = {
-        type: "FMLink",
+        type: "Link",
         nodeA: main.nodes.indexOf(link.nodeA),
         nodeB: main.nodes.indexOf(link.nodeB),
-        textStart: link.textStart,
-        textEnd: link.textEnd,
+        text: link.text,
         lineAngleAdjust: link.lineAngleAdjust,
         parallelPart: link.parallelPart,
         perpendicularPart: link.perpendicularPart,

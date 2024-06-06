@@ -1,9 +1,4 @@
-import {
-  drawText,
-  hitTargetPadding,
-  nodeRadius,
-  selectedObject,
-} from "../../fm-main.js";
+import { FmMain } from "../../fm-main-dos.js";
 
 export class FmSelfLink {
   constructor(node, mouse) {
@@ -11,6 +6,7 @@ export class FmSelfLink {
     this.anchorAngle = 0;
     this.mouseOffsetAngle = 0;
     this.text = "";
+    this.main = FmMain.getInstance();
 
     if (mouse) {
       this.setAnchorPoint(mouse.x, mouse.y);
@@ -34,9 +30,9 @@ export class FmSelfLink {
   }
 
   getEndPointsAndCircle() {
-    const circleX = this.node.x + 1.5 * nodeRadius * Math.cos(this.anchorAngle);
-    const circleY = this.node.y + 1.5 * nodeRadius * Math.sin(this.anchorAngle);
-    const circleRadius = 0.75 * nodeRadius;
+    const circleX = this.node.x + 1.5 * this.main.nodeRadius * Math.cos(this.anchorAngle);
+    const circleY = this.node.y + 1.5 * this.main.nodeRadius * Math.sin(this.anchorAngle);
+    const circleRadius = 0.75 * this.main.nodeRadius;
     const startAngle = this.anchorAngle - Math.PI * 0.8;
     const endAngle = this.anchorAngle + Math.PI * 0.8;
     const startX = circleX + circleRadius * Math.cos(startAngle);
@@ -76,13 +72,13 @@ export class FmSelfLink {
       stuff.circleX + stuff.circleRadius * Math.cos(this.anchorAngle);
     const textY =
       stuff.circleY + stuff.circleRadius * Math.sin(this.anchorAngle);
-    drawText(
+    this.main.drawText(
       c,
       this.text,
       textX,
       textY,
       this.anchorAngle,
-      selectedObject === this,
+      this.main.selectedObject === this,
     );
     // draw the head of the arrow
     // drawArrow(c, stuff.endX, stuff.endY, stuff.endAngle + Math.PI * 0.4);
@@ -93,6 +89,6 @@ export class FmSelfLink {
     const dx = x - stuff.circleX;
     const dy = y - stuff.circleY;
     const distance = Math.sqrt(dx * dx + dy * dy) - stuff.circleRadius;
-    return Math.abs(distance) < hitTargetPadding;
+    return Math.abs(distance) < this.main.hitTargetPadding;
   }
 }

@@ -1,4 +1,4 @@
-import { drawText, nodeRadius, selectedObject } from "../../fm-main.js";
+import { FmMain } from "../../fm-main-dos.js";
 
 export class FmNode {
   constructor(x, y) {
@@ -8,6 +8,7 @@ export class FmNode {
     this.mouseOffsetY = 0;
     this.isAcceptState = false;
     this.text = "";
+    this.main = FmMain.getInstance();
   }
 
   setMouseStart(x, y) {
@@ -23,16 +24,16 @@ export class FmNode {
   draw(c) {
     // draw the circle
     c.beginPath();
-    c.arc(this.x, this.y, nodeRadius, 0, 2 * Math.PI, false);
+    c.arc(this.x, this.y, this.main.nodeRadius, 0, 2 * Math.PI, false);
     c.stroke();
 
     // draw the text
-    drawText(c, this.text, this.x, this.y, null, selectedObject === this);
+    this.main.drawText(c, this.text, this.x, this.y, null, this.main.selectedObject === this);
 
     // draw a double circle for an accept state
     if (this.isAcceptState) {
       c.beginPath();
-      c.arc(this.x, this.y, nodeRadius - 6, 0, 2 * Math.PI, false);
+      c.arc(this.x, this.y, this.main.nodeRadius - 6, 0, 2 * Math.PI, false);
       c.stroke();
     }
   }
@@ -43,15 +44,15 @@ export class FmNode {
     const scale = Math.sqrt(dx * dx + dy * dy);
 
     return {
-      x: this.x + (dx * nodeRadius) / scale,
-      y: this.y + (dy * nodeRadius) / scale,
+      x: this.x + (dx * this.main.nodeRadius) / scale,
+      y: this.y + (dy * this.main.nodeRadius) / scale,
     };
   }
 
   containsPoint(x, y) {
     return (
       (x - this.x) * (x - this.x) + (y - this.y) * (y - this.y) <
-      nodeRadius * nodeRadius
+      this.main.nodeRadius *this.main.nodeRadius 
     );
   }
 }

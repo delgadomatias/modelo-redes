@@ -28,11 +28,13 @@ export let acceptedNodes = [];
 function canvasHasFocus() {
   return (document.activeElement || document.body) === document.body;
 }
+
 function draw() {
   if (!canvas) return;
   drawUsing(canvas.getContext("2d"));
   saveBackup();
 }
+
 function drawUsing(c) {
   c.clearRect(0, 0, canvas.width, canvas.height);
   c.save();

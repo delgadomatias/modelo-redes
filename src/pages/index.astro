@@ -80,15 +80,35 @@ const options = [
   </div>
 </Layout>
 
+<!--<script>-->
+<!--  import { execute } from "../scripts/main";-->
+<!--  import { executeResolver } from "../scripts/resolver";-->
+
+<!--  function init() {-->
+<!--    execute();-->
+<!--    executeResolver();-->
+<!--  }-->
+
+<!--  document.addEventListener("astro:page-load", init);-->
+<!--  init();-->
+<!--</script>-->
+
 <script>
-  import { execute } from "../scripts/main";
-  import { executeResolver } from "../scripts/resolver";
+  import { Main } from "../scripts/main-dos";
+  import { Resolver } from "../resolver-dos";
+  import { saveBackup } from "../scripts/utils";
 
   function init() {
-    execute();
-    executeResolver();
+    if (window.location.pathname !== "/") return;
+
+    const main = Main.getInstance();
+    main.makeRestoreBackup("pyd");
+    main.setSaveBackupFn(saveBackup);
+    main.startListeners(document.querySelector("#canvas"));
+
+    const resolver = Resolver.getInstance();
+    resolver.runForPrimAndDijkstra();
   }
 
   document.addEventListener("astro:page-load", init);
-  init();
 </script>

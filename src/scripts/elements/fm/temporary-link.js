@@ -1,9 +1,10 @@
-import { drawArrow } from "../../fm-main.js";
+import { FmMain } from "../../fm-main-dos.js";
 
 export class FmTemporaryLink {
   constructor(from, to) {
     this.from = from;
     this.to = to;
+    this.main = FmMain.getInstance();
   }
 
   draw(c) {
@@ -14,7 +15,7 @@ export class FmTemporaryLink {
     c.stroke();
 
     // Draw the head of the arrow
-    drawArrow(
+    this.main.drawArrow(
       c,
       this.to.x,
       this.to.y,

@@ -1,12 +1,5 @@
-import {
-  drawText,
-  editingEndText,
-  hitTargetPadding,
-  nodeRadius,
-  selectedObject,
-  snapToPadding,
-} from "../../fm-main.js";
 import { circleFromThreePoints } from "../../utils/index.js";
+import { FmMain } from "../../fm-main-dos.js";
 
 // export class FMLink {
 //   constructor(a, b) {
@@ -14,6 +7,7 @@ import { circleFromThreePoints } from "../../utils/index.js";
 //     this.nodeB = b;
 //     this.textStart = "";
 //     this.textEnd = "";
+//     this.main = FmMain.getInstance();
 //
 //     this.lineAngleAdjust = 0; // value to add to textAngle when link is straight line
 //
@@ -50,7 +44,7 @@ import { circleFromThreePoints } from "../../utils/index.js";
 //     if (
 //       this.parallelPart > 0 &&
 //       this.parallelPart < 1 &&
-//       Math.abs(this.perpendicularPart) < snapToPadding
+//       Math.abs(this.perpendicularPart) < this.main.snapToPadding
 //     ) {
 //       this.lineAngleAdjust = (this.perpendicularPart < 0) * Math.PI;
 //       this.perpendicularPart = 0;
@@ -85,10 +79,10 @@ import { circleFromThreePoints } from "../../utils/index.js";
 //     let reverseScale = isReversed ? 1 : -1;
 //     let startAngle =
 //       Math.atan2(this.nodeA.y - circle.y, this.nodeA.x - circle.x) -
-//       (reverseScale * nodeRadius) / circle.radius;
+//       (reverseScale * this.main.nodeRadius) / circle.radius;
 //     let endAngle =
 //       Math.atan2(this.nodeB.y - circle.y, this.nodeB.x - circle.x) +
-//       (reverseScale * nodeRadius) / circle.radius;
+//       (reverseScale * this.main.nodeRadius) / circle.radius;
 //     let startX = circle.x + circle.radius * Math.cos(startAngle);
 //     let startY = circle.y + circle.radius * Math.sin(startAngle);
 //     let endX = circle.x + circle.radius * Math.cos(endAngle);
@@ -178,22 +172,22 @@ import { circleFromThreePoints } from "../../utils/index.js";
 //       Math.cos(angle) * perpendicularOffset;
 //
 //     // Dibuja el texto en una posición fija relativa a los nodos de inicio y final
-//     drawText(
+//     this.main.drawText(
 //       c,
 //       this.textStart,
 //       startX,
 //       startY,
 //       null,
-//       this === selectedObject && !editingEndText,
+//       this === this.main.selectedObject && !this.main.editingEndText,
 //     );
 //
-//     drawText(
+//     this.main.drawText(
 //       c,
 //       this.textEnd,
 //       endX,
 //       endY,
 //       null,
-//       this === selectedObject && editingEndText,
+//       this === this.main.selectedObject && this.main.editingEndText,
 //     );
 //   }
 //
@@ -203,7 +197,7 @@ import { circleFromThreePoints } from "../../utils/index.js";
 //       const dx = x - stuff.circleX;
 //       const dy = y - stuff.circleY;
 //       const distance = Math.sqrt(dx * dx + dy * dy) - stuff.circleRadius;
-//       if (Math.abs(distance) < hitTargetPadding) {
+//       if (Math.abs(distance) < this.main.hitTargetPadding) {
 //         let angle = Math.atan2(dy, dx);
 //         let startAngle = stuff.startAngle;
 //         let endAngle = stuff.endAngle;
@@ -234,20 +228,22 @@ import { circleFromThreePoints } from "../../utils/index.js";
 //       let distance =
 //         (dx * (y - stuff.startY) - dy * (x - stuff.startX)) / length;
 //       return (
-//         percent > 0 && percent < 1 && Math.abs(distance) < hitTargetPadding
+//         percent > 0 &&
+//         percent < 1 &&
+//         Math.abs(distance) < this.main.hitTargetPadding
 //       );
 //     }
 //
 //     return false;
 //   }
 // }
-
 export class FMLink {
   constructor(a, b) {
     this.nodeA = a;
     this.nodeB = b;
     this.textStart = "";
     this.textEnd = "";
+    this.main = FmMain.getInstance();
 
     this.lineAngleAdjust = 0; // value to add to textAngle when link is straight line
 
@@ -256,7 +252,7 @@ export class FMLink {
     this.perpendicularPart = 0; // pixels from line between nodeA and nodeB
 
     // Initialize text positions
-    this.updateTextPositions();
+    // this.updateTextPositions();
   }
 
   getAnchorPoint() {
@@ -287,14 +283,14 @@ export class FMLink {
     if (
       this.parallelPart > 0 &&
       this.parallelPart < 1 &&
-      Math.abs(this.perpendicularPart) < snapToPadding
+      Math.abs(this.perpendicularPart) < this.main.snapToPadding
     ) {
       this.lineAngleAdjust = (this.perpendicularPart < 0) * Math.PI;
       this.perpendicularPart = 0;
     }
 
     // Update text positions after setting the anchor point
-    this.updateTextPositions();
+    // this.updateTextPositions();
   }
 
   getEndPointsAndCircle() {
@@ -325,10 +321,10 @@ export class FMLink {
     let reverseScale = isReversed ? 1 : -1;
     let startAngle =
       Math.atan2(this.nodeA.y - circle.y, this.nodeA.x - circle.x) -
-      (reverseScale * nodeRadius) / circle.radius;
+      (reverseScale * this.main.nodeRadius) / circle.radius;
     let endAngle =
       Math.atan2(this.nodeB.y - circle.y, this.nodeB.x - circle.x) +
-      (reverseScale * nodeRadius) / circle.radius;
+      (reverseScale * this.main.nodeRadius) / circle.radius;
     let startX = circle.x + circle.radius * Math.cos(startAngle);
     let startY = circle.y + circle.radius * Math.sin(startAngle);
     let endX = circle.x + circle.radius * Math.cos(endAngle);
@@ -350,52 +346,13 @@ export class FMLink {
     };
   }
 
-  updateTextPositions() {
-    const endPoints = this.getEndPointsAndCircle();
-    const angle = Math.atan2(
-      endPoints.endY - endPoints.startY,
-      endPoints.endX - endPoints.startX,
-    );
-
-    // Additional offset for text
-    const textOffset = 10;
-    const perpendicularOffset = 20;
-
-    this.textStartX =
-      endPoints.startX +
-      Math.cos(angle) * textOffset -
-      Math.sin(angle) * perpendicularOffset;
-    this.textStartY =
-      endPoints.startY +
-      Math.sin(angle) * textOffset +
-      Math.cos(angle) * perpendicularOffset;
-
-    this.textEndX =
-      endPoints.endX -
-      Math.cos(angle) * textOffset +
-      Math.sin(angle) * perpendicularOffset;
-    this.textEndY =
-      endPoints.endY -
-      Math.sin(angle) * textOffset -
-      Math.cos(angle) * perpendicularOffset;
-  }
-
-  draw(c) {
+  draw = (c) => {
+    let textY;
+    let textAngle;
+    let textX;
     const stuff = this.getEndPointsAndCircle();
-    // Dibuja la línea entre nodeA y nodeB
-    const startCoords = this.nodeA.closestPointOnCircle(
-      this.nodeB.x,
-      this.nodeB.y,
-    );
-
-    const endCoords = this.nodeB.closestPointOnCircle(
-      this.nodeA.x,
-      this.nodeA.y,
-    );
-
     // draw arc
     c.beginPath();
-
     if (stuff.hasCircle) {
       c.arc(
         stuff.circleX,
@@ -406,30 +363,226 @@ export class FMLink {
         stuff.isReversed,
       );
     } else {
-      c.moveTo(startCoords.x, startCoords.y);
-      c.lineTo(endCoords.x, endCoords.y);
+      c.moveTo(stuff.startX, stuff.startY);
+      c.lineTo(stuff.endX, stuff.endY);
     }
     c.stroke();
+    // draw the head of the arrow
+    // if(stuff.hasCircle) {
+    //     drawArrow(c, stuff.endX, stuff.endY, stuff.endAngle - stuff.reverseScale * (Math.PI / 2));
+    // } else {
+    //     drawArrow(c, stuff.endX, stuff.endY, Math.atan2(stuff.endY - stuff.startY, stuff.endX - stuff.startX));
+    // }
 
-    // Dibuja el texto en las posiciones calculadas
-    drawText(
-      c,
-      this.textStart,
-      this.textStartX,
-      this.textStartY,
-      null,
-      this === selectedObject && !editingEndText,
-    );
+    // draw the text
+    if (stuff.hasCircle) {
+      const startAngle = stuff.startAngle;
+      let endAngle = stuff.endAngle;
+      if (endAngle < startAngle) {
+        endAngle += Math.PI * 2;
+      }
+      textAngle = (startAngle + endAngle) / 2 + stuff.isReversed * Math.PI;
+      textX = stuff.circleX + stuff.circleRadius * Math.cos(textAngle);
+      textY = stuff.circleY + stuff.circleRadius * Math.sin(textAngle);
+      this.main.drawText(
+        c,
+        this.textStart,
+        textX,
+        textY,
+        textAngle,
+        this.main.selectedObject === this,
+      );
+    } else {
+      textX = (stuff.startX + stuff.endX) / 2;
+      textY = (stuff.startY + stuff.endY) / 2;
+      textAngle = Math.atan2(
+        stuff.endX - stuff.startX,
+        stuff.startY - stuff.endY,
+      );
 
-    drawText(
-      c,
-      this.textEnd,
-      this.textEndX,
-      this.textEndY,
-      null,
-      this === selectedObject && editingEndText,
-    );
-  }
+      this.main.drawText(
+        c,
+        this.textStart,
+        textX,
+        textY,
+        textAngle + this.lineAngleAdjust,
+        this.main.selectedObject === this,
+      );
+    }
+  };
+
+  // draw = (c) => {
+  //   const stuff = this.getEndPointsAndCircle();
+  //   const textOffset = 20; // Adjust this value as needed
+  //
+  //   // draw arc
+  //   c.beginPath();
+  //   if (stuff.hasCircle) {
+  //     c.arc(
+  //       stuff.circleX,
+  //       stuff.circleY,
+  //       stuff.circleRadius,
+  //       stuff.startAngle,
+  //       stuff.endAngle,
+  //       stuff.isReversed,
+  //     );
+  //   } else {
+  //     c.moveTo(stuff.startX, stuff.startY);
+  //     c.lineTo(stuff.endX, stuff.endY);
+  //   }
+  //   c.stroke();
+  //
+  //   // draw the text
+  //   const angle = Math.atan2(
+  //     stuff.endY - stuff.startY,
+  //     stuff.endX - stuff.startX,
+  //   );
+  //
+  //   // Determine the direction of the text based on the angle of the line
+  //   const direction = angle > Math.PI / 2 && angle < (3 * Math.PI) / 2 ? -1 : 1;
+  //
+  //   // Position the start text at the start point, offset by a fixed amount in the direction perpendicular to the line or arc
+  //   const textStartX =
+  //     stuff.startX + direction * Math.cos(angle + Math.PI / 2) * textOffset;
+  //   const textStartY =
+  //     stuff.startY + direction * Math.sin(angle + Math.PI / 2) * textOffset;
+  //
+  //   // Position the end text at the end point, offset by a fixed amount in the direction perpendicular to the line or arc
+  //   const textEndX =
+  //     stuff.endX - direction * Math.cos(angle + Math.PI / 2) * textOffset;
+  //   const textEndY =
+  //     stuff.endY - direction * Math.sin(angle + Math.PI / 2) * textOffset;
+  //
+  //   this.main.drawText(
+  //     c,
+  //     this.textStart,
+  //     textStartX,
+  //     textStartY,
+  //     angle,
+  //     this.main.selectedObject === this,
+  //   );
+  //
+  //   this.main.drawText(
+  //     c,
+  //     this.textEnd,
+  //     textEndX,
+  //     textEndY,
+  //     angle,
+  //     this.main.selectedObject === this,
+  //   );
+  // };
+
+  // draw = (c) => {
+  //   const stuff = this.getEndPointsAndCircle();
+  //   const textOffset = 20; // Adjust this value as needed
+  //
+  //   // draw arc
+  //   c.beginPath();
+  //   if (stuff.hasCircle) {
+  //     c.arc(
+  //       stuff.circleX,
+  //       stuff.circleY,
+  //       stuff.circleRadius,
+  //       stuff.startAngle,
+  //       stuff.endAngle,
+  //       stuff.isReversed,
+  //     );
+  //   } else {
+  //     c.moveTo(stuff.startX, stuff.startY);
+  //     c.lineTo(stuff.endX, stuff.endY);
+  //   }
+  //   c.stroke();
+  //
+  //   // draw the text
+  //   const angle = Math.atan2(
+  //     stuff.endY - stuff.startY,
+  //     stuff.endX - stuff.startX,
+  //   );
+  //
+  //   // Determine the direction of the text based on the angle of the line
+  //   const direction = angle > Math.PI / 2 && angle < (3 * Math.PI) / 2 ? -1 : 1;
+  //
+  //   // Position the start text at the start point, offset by a fixed amount in the direction perpendicular to the line or arc
+  //   const textStartX =
+  //     stuff.startX + direction * Math.cos(angle + Math.PI / 2) * textOffset;
+  //   const textStartY =
+  //     stuff.startY + direction * Math.sin(angle + Math.PI / 2) * textOffset;
+  //
+  //   // Position the end text at the end point, offset by a fixed amount in the direction perpendicular to the line or arc
+  //   const textEndX =
+  //     stuff.endX - direction * Math.cos(angle + Math.PI / 2) * textOffset;
+  //   const textEndY =
+  //     stuff.endY - direction * Math.sin(angle + Math.PI / 2) * textOffset;
+  //
+  //   this.main.drawText(
+  //     c,
+  //     this.textStart,
+  //     textStartX,
+  //     textStartY,
+  //     angle,
+  //     this.main.selectedObject === this,
+  //   );
+  //
+  //   this.main.drawText(
+  //     c,
+  //     this.textEnd,
+  //     textEndX,
+  //     textEndY,
+  //     angle,
+  //     this.main.selectedObject === this,
+  //   );
+  // };
+
+  // draw(c) {
+  //   const stuff = this.getEndPointsAndCircle();
+  //   // Dibuja la línea entre nodeA y nodeB
+  //   const startCoords = this.nodeA.closestPointOnCircle(
+  //     this.nodeB.x,
+  //     this.nodeB.y,
+  //   );
+  //
+  //   const endCoords = this.nodeB.closestPointOnCircle(
+  //     this.nodeA.x,
+  //     this.nodeA.y,
+  //   );
+  //
+  //   // draw arc
+  //   c.beginPath();
+  //
+  //   if (stuff.hasCircle) {
+  //     c.arc(
+  //       stuff.circleX,
+  //       stuff.circleY,
+  //       stuff.circleRadius,
+  //       stuff.startAngle,
+  //       stuff.endAngle,
+  //       stuff.isReversed,
+  //     );
+  //   } else {
+  //     c.moveTo(startCoords.x, startCoords.y);
+  //     c.lineTo(endCoords.x, endCoords.y);
+  //   }
+  //   c.stroke();
+  //
+  //   // Dibuja el texto en las posiciones calculadas
+  //   this.main.drawText(
+  //     c,
+  //     this.textStart,
+  //     this.textStartX,
+  //     this.textStartY,
+  //     null,
+  //     this === this.main.selectedObject && !this.main.editingEndText,
+  //   );
+  //
+  //   this.main.drawText(
+  //     c,
+  //     this.textEnd,
+  //     this.textEndX,
+  //     this.textEndY,
+  //     null,
+  //     this === this.main.selectedObject && this.main.editingEndText,
+  //   );
+  // }
 
   containsPoint(x, y) {
     const stuff = this.getEndPointsAndCircle();
@@ -437,7 +590,7 @@ export class FMLink {
       const dx = x - stuff.circleX;
       const dy = y - stuff.circleY;
       const distance = Math.sqrt(dx * dx + dy * dy) - stuff.circleRadius;
-      if (Math.abs(distance) < hitTargetPadding) {
+      if (Math.abs(distance) < this.main.hitTargetPadding) {
         let angle = Math.atan2(dy, dx);
         let startAngle = stuff.startAngle;
         let endAngle = stuff.endAngle;
@@ -468,7 +621,9 @@ export class FMLink {
       let distance =
         (dx * (y - stuff.startY) - dy * (x - stuff.startX)) / length;
       return (
-        percent > 0 && percent < 1 && Math.abs(distance) < hitTargetPadding
+        percent > 0 &&
+        percent < 1 &&
+        Math.abs(distance) < this.main.hitTargetPadding
       );
     }
 

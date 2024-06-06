@@ -1,9 +1,4 @@
-import {
-  drawText,
-  hitTargetPadding,
-  selectedObject,
-  snapToPadding,
-} from "../../fm-main.js";
+import { FmMain } from "../../fm-main-dos.js";
 
 export class FmStartLink {
   constructor(node, start) {
@@ -11,6 +6,7 @@ export class FmStartLink {
     this.deltaX = 0;
     this.deltaY = 0;
     this.text = "";
+    this.main = FmMain.getInstance()
 
     if (start) {
       this.setAnchorPoint(start.x, start.y);
@@ -21,11 +17,11 @@ export class FmStartLink {
     this.deltaX = x - this.node.x;
     this.deltaY = y - this.node.y;
 
-    if (Math.abs(this.deltaX) < snapToPadding) {
+    if (Math.abs(this.deltaX) < this.main.snapToPadding) {
       this.deltaX = 0;
     }
 
-    if (Math.abs(this.deltaY) < snapToPadding) {
+    if (Math.abs(this.deltaY) < this.main.snapToPadding) {
       this.deltaY = 0;
     }
   }
@@ -56,13 +52,13 @@ export class FmStartLink {
       stuff.startY - stuff.endY,
       stuff.startX - stuff.endX,
     );
-    drawText(
+    this.main.drawText(
       c,
       this.text,
       stuff.startX,
       stuff.startY,
       textAngle,
-      selectedObject === this,
+      this.main.selectedObject === this,
     );
 
     // draw the head of the arrow
@@ -78,6 +74,6 @@ export class FmStartLink {
       (dx * (x - stuff.startX) + dy * (y - stuff.startY)) / (length * length);
     const distance =
       (dx * (y - stuff.startY) - dy * (x - stuff.startX)) / length;
-    return percent > 0 && percent < 1 && Math.abs(distance) < hitTargetPadding;
+    return percent > 0 && percent < 1 && Math.abs(distance) < this.main.hitTargetPadding;
   }
 }

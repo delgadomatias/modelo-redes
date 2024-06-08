@@ -1,7 +1,7 @@
 import { Main } from "./main.js";
 import { WeightedGraph } from "./algorithms/dijkstra.js";
 import { Link, Node } from "./elements/index.js";
-import { fordFulkerson } from "./algorithms/max-flow.js";
+import {calculateFlowGraph, fordFulkerson} from "./algorithms/max-flow.js";
 import { kruskal } from "./algorithms/kruskal.js";
 
 export class Resolver {
@@ -194,6 +194,7 @@ export class Resolver {
     const resetButton = document.querySelector("#fm-reset-btn");
     const resolveButton = document.querySelector("#fm-resolve");
 
+
     resetButton.addEventListener("click", this.main.onReset);
     resolveButton.addEventListener("click", this.onResolve);
   };
@@ -202,35 +203,90 @@ export class Resolver {
     const solutionsContainer = document.querySelector(
       "#fm-solutions-container",
     );
+    const solutionsDiv = document.querySelector("#fm-solutions-div")
 
-    let s = parseFloat(this.main.acceptedNodes[0]?.text) - 1 || null;
-    let t = parseFloat(this.main.acceptedNodes[1]?.text) - 1 || null;
+    let s,t;
+
+    if(this.main.acceptedNodes.length === 2) {
+      s = this.main.nodes.findIndex((node) => node.text === this.main.acceptedNodes[0].text);
+      t = this.main.nodes.findIndex((node) => node.text === this.main.acceptedNodes[1].text);
+    } else {
+      s = parseFloat(this.main.nodes[0].text)
+      t = parseFloat(this.main.nodes[this.main.nodes.length - 1].text)
+    }
 
     solutionsContainer.classList.remove("hidden");
     solutionsContainer.classList.add("flex");
 
-    if (!s || !t) {
+    if (s === null || t === null) {
       alert("Por favor, seleccione un nodo de inicio y un nodo de fin");
       return;
     }
 
     const graph = this.createAdjacencyMatrix();
     const maxFlow = fordFulkerson(graph, s, t);
-    console.log(maxFlow);
+    const finalGraph = calculateFlowGraph(graph, maxFlow.rGraph)
+
+    const newLinks = []
+
+    // // Now, map from finalGraph to console log representation like this: Node 0 to Node 1 -> Weight
+    finalGraph.forEach((node, index) => {
+      const actualNode = this.main.nodes[index]
+      node.forEach((flow, index) => {
+        if(flow > 0) {
+          const destNode = this.main.nodes[index]
+          // Check if a link already exists between the two nodes
+          const existingLink = newLinks.find(link =>
+              (link.nodeA === actualNode && link.nodeB === destNode) ||
+              (link.nodeA === destNode && link.nodeB === actualNode)
+          );
+          // Only create a new link if one does not already exist
+          if (!existingLink) {
+            const link = new Link(actualNode, destNode)
+            link.text = `${flow}`
+            newLinks.push(link)
+          }
+        }
+      })
+    })
+
+    solutionsDiv.innerHTML = "";
+
+    const div = this.createDivWithHeader(
+        "Solución por el algoritmo de Ford-Fulkerson",
+    );
+    div.id = "max-flow-solution";
+    solutionsDiv.append(div);
+
+    const newCanvas = this.createNewCanvas();
+    newCanvas.id = "max-flow-canvas";
+    div.append(newCanvas);
+
+    const newH3 = document.createElement("h3");
+    newH3.textContent = `Flujo máximo: ${maxFlow.maxFlow}`;
+    newH3.className = "font-medium text-3xl ml-2";
+    div.append(newH3);
+
+    this.main.drawSolution(newCanvas.getContext("2d"), this.main.nodes, newLinks);
+    let offset = 45;
+    let elementPosition = solutionsDiv.getBoundingClientRect().top;
+    let offsetPosition = elementPosition + window.pageYOffset - offset;
+    window.scrollTo({
+      top: offsetPosition,
+      behavior: "smooth",
+    });
+
   };
 
   createAdjacencyMatrix = () => {
     // Paso 1: Crear una matriz vacía del tamaño de los nodos
-
     const matrix = Array(this.main.nodes.length)
       .fill(0)
       .map(() => Array(this.main.nodes.length).fill(0));
 
-    console.log(matrix);
 
     // Paso 2: Iterar sobre los enlaces
     this.main.links.forEach((link) => {
-      // Paso 3: Encontrar los índices de nodeA y nodeB
       const sepLink = link.text.split("/");
       const indexA = this.main.nodes.findIndex(
         (node) => node.text === link.nodeA.text,
@@ -239,10 +295,9 @@ export class Resolver {
         (node) => node.text === link.nodeB.text,
       );
 
-      // // Paso 4: Actualizar la matriz de adyacencia con los valores de textStart y textEnd
       matrix[indexA][indexB] = parseFloat(sepLink[1]);
       matrix[indexB][indexA] = parseFloat(sepLink[0]);
-    });
+    })
 
     return matrix;
   };

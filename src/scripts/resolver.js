@@ -1,7 +1,7 @@
 import { Main } from "./main.js";
 import { WeightedGraph } from "./algorithms/dijkstra.js";
 import { Link, Node } from "./elements/index.js";
-import {calculateFlowGraph, fordFulkerson} from "./algorithms/max-flow.js";
+import { calculateFlowGraph, fordFulkerson } from "./algorithms/max-flow.js";
 import { kruskal } from "./algorithms/kruskal.js";
 
 export class Resolver {
@@ -194,7 +194,6 @@ export class Resolver {
     const resetButton = document.querySelector("#fm-reset-btn");
     const resolveButton = document.querySelector("#fm-resolve");
 
-
     resetButton.addEventListener("click", this.main.onReset);
     resolveButton.addEventListener("click", this.onResolve);
   };
@@ -203,16 +202,20 @@ export class Resolver {
     const solutionsContainer = document.querySelector(
       "#fm-solutions-container",
     );
-    const solutionsDiv = document.querySelector("#fm-solutions-div")
+    const solutionsDiv = document.querySelector("#fm-solutions-div");
 
-    let s,t;
+    let s, t;
 
-    if(this.main.acceptedNodes.length === 2) {
-      s = this.main.nodes.findIndex((node) => node.text === this.main.acceptedNodes[0].text);
-      t = this.main.nodes.findIndex((node) => node.text === this.main.acceptedNodes[1].text);
+    if (this.main.acceptedNodes.length === 2) {
+      s = this.main.nodes.findIndex(
+        (node) => node.text === this.main.acceptedNodes[0].text,
+      );
+      t = this.main.nodes.findIndex(
+        (node) => node.text === this.main.acceptedNodes[1].text,
+      );
     } else {
-      s = parseFloat(this.main.nodes[0].text)
-      t = parseFloat(this.main.nodes[this.main.nodes.length - 1].text)
+      s = parseFloat(this.main.nodes[0].text);
+      t = parseFloat(this.main.nodes[this.main.nodes.length - 1].text);
     }
 
     solutionsContainer.classList.remove("hidden");
@@ -225,35 +228,36 @@ export class Resolver {
 
     const graph = this.createAdjacencyMatrix();
     const maxFlow = fordFulkerson(graph, s, t);
-    const finalGraph = calculateFlowGraph(graph, maxFlow.rGraph)
+    const finalGraph = calculateFlowGraph(graph, maxFlow.rGraph);
 
-    const newLinks = []
+    const newLinks = [];
 
     // // Now, map from finalGraph to console log representation like this: Node 0 to Node 1 -> Weight
     finalGraph.forEach((node, index) => {
-      const actualNode = this.main.nodes[index]
+      const actualNode = this.main.nodes[index];
       node.forEach((flow, index) => {
-        if(flow > 0) {
-          const destNode = this.main.nodes[index]
+        if (flow > 0) {
+          const destNode = this.main.nodes[index];
           // Check if a link already exists between the two nodes
-          const existingLink = newLinks.find(link =>
+          const existingLink = newLinks.find(
+            (link) =>
               (link.nodeA === actualNode && link.nodeB === destNode) ||
-              (link.nodeA === destNode && link.nodeB === actualNode)
+              (link.nodeA === destNode && link.nodeB === actualNode),
           );
           // Only create a new link if one does not already exist
           if (!existingLink) {
-            const link = new Link(actualNode, destNode)
-            link.text = `${flow}`
-            newLinks.push(link)
+            const link = new Link(actualNode, destNode);
+            link.text = `${flow}`;
+            newLinks.push(link);
           }
         }
-      })
-    })
+      });
+    });
 
     solutionsDiv.innerHTML = "";
 
     const div = this.createDivWithHeader(
-        "Solución por el algoritmo de Ford-Fulkerson",
+      "Solución por el algoritmo de Ford-Fulkerson",
     );
     div.id = "max-flow-solution";
     solutionsDiv.append(div);
@@ -267,7 +271,11 @@ export class Resolver {
     newH3.className = "font-medium text-3xl ml-2";
     div.append(newH3);
 
-    this.main.drawSolution(newCanvas.getContext("2d"), this.main.nodes, newLinks);
+    this.main.drawSolution(
+      newCanvas.getContext("2d"),
+      this.main.nodes,
+      newLinks,
+    );
     let offset = 45;
     let elementPosition = solutionsDiv.getBoundingClientRect().top;
     let offsetPosition = elementPosition + window.pageYOffset - offset;
@@ -275,7 +283,6 @@ export class Resolver {
       top: offsetPosition,
       behavior: "smooth",
     });
-
   };
 
   createAdjacencyMatrix = () => {
@@ -283,7 +290,6 @@ export class Resolver {
     const matrix = Array(this.main.nodes.length)
       .fill(0)
       .map(() => Array(this.main.nodes.length).fill(0));
-
 
     // Paso 2: Iterar sobre los enlaces
     this.main.links.forEach((link) => {
@@ -295,9 +301,9 @@ export class Resolver {
         (node) => node.text === link.nodeB.text,
       );
 
-      matrix[indexA][indexB] = parseFloat(sepLink[1]);
-      matrix[indexB][indexA] = parseFloat(sepLink[0]);
-    })
+      matrix[indexA][indexB] = parseFloat(sepLink[0]);
+      matrix[indexB][indexA] = parseFloat(sepLink[1]);
+    });
 
     return matrix;
   };

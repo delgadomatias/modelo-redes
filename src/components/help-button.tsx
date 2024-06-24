@@ -36,7 +36,7 @@ export const HelpButton = ({ isMaxFlow = false }: { isMaxFlow: boolean }) => {
                 <Kbd keys={"delete"}>Suprimir</Kbd> para eliminar un nodo.
               </li>
               <li className={"px-4"}>
-                <Kbd keys={"shift"}>Shift + click izquierdo</Kbd> en simultaneo
+                <Kbd keys={"shift"}>Shift + click izquierdo</Kbd> en simultáneo
                 para crear una relación.
               </li>
             </ul>

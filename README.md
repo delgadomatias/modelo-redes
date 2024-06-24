@@ -1,5 +1,5 @@
 # Algoritmos de Modelos de Red
-Para acceder a la herramienta haz [click aqui](https://modelo-redes.vercel.app/)
+Para acceder a la herramienta [haz click aquí](https://modelo-redes.vercel.app/)
 ## Integrantes
 - Amante, Aldana
 - Antuña, Nicolás

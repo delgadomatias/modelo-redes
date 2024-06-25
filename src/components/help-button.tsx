@@ -47,11 +47,11 @@ export const HelpButton = ({ isMaxFlow = false }: { isMaxFlow: boolean }) => {
               className={`list-disc list-inside flex flex-col gap-2 ${!isMaxFlow ? "pb-6" : "pb-2"}`}
             >
               <li className={"px-4"}>
-                El color <span className={"text-blue-700"}>azul</span>{" "}
+                Un nodo de color <span className={"text-blue-700"}>azul</span>{" "}
                 representa un nodo de inicio.
               </li>
               <li className={"px-4"}>
-                El color <span className={"text-green-700"}>verde</span>{" "}
+                Un nodo de color <span className={"text-green-700"}>verde</span>{" "}
                 representa un nodo de fin.
               </li>
             </ul>

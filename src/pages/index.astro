@@ -86,8 +86,9 @@ const options = [
     window.addEventListener("resize", resizeHeader);
 
     function resizeHeader() {
-      const header = document.querySelector("#header");
-      const canvas = document.querySelector("canvas");
+      const header = document.querySelector("#header") as HTMLDivElement;
+      const canvas = document.querySelector("canvas") as HTMLCanvasElement;
+
       header.style.width = `${canvas.clientWidth}px`;
       header.classList.remove("invisible");
     }

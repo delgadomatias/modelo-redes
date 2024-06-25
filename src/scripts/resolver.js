@@ -217,6 +217,7 @@ export class Resolver {
         newNodes.push(lastNode);
 
         this.main.drawSolution(newCanvas.getContext("2d"), newNodes, newLinks);
+        scrollIntoView();
       }
 
       // Scroll into view

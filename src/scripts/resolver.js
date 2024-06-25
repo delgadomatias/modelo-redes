@@ -21,6 +21,16 @@ export class Resolver {
   }
 
   runForPrimAndDijkstra = () => {
+    // Check if some node has no relation
+    const checkLinks = () => {
+      let nodes = this.main.nodes.map((node) => node.text);
+      let links = this.main.links.map((link) => [
+        link.nodeA.text,
+        link.nodeB.text,
+      ]);
+      return nodes.filter((node) => !links.flat().includes(node)).length > 0;
+    };
+
     const dijkstraOption = document.querySelector("#Dijkstra-option input");
     const primOption = document.querySelector("#Kruskal-option input");
     const resetButton = document.querySelector("#reset-btn");
@@ -84,6 +94,10 @@ export class Resolver {
       }
 
       if (this.resolveBy.includes("Kruskal")) {
+        if (checkLinks()) {
+          alert("Por favor, complete todas las relaciones entre nodos.");
+          return;
+        }
         solutionsContainer.classList.remove("hidden");
         solutionsContainer.classList.add("flex");
         const finalWeight = this.resolveByKruskal();
@@ -129,16 +143,31 @@ export class Resolver {
         });
 
         this.main.drawSolution(newCanvas.getContext("2d"), newNodes, newLinks);
+        scrollIntoView();
       }
 
       if (this.resolveBy.includes("Dijkstra")) {
+        if (checkLinks()) {
+          alert("Por favor, complete todas las relaciones entre nodos.");
+          return;
+        }
         if (this.main.acceptedNodes.length === 1) {
-          alert("Por favor, seleccione un nodo de fin.");
+          alert(
+            "Para el algoritmo de Dijkstra se necesita un nodo de fin. Por favor, seleccione un nodo de fin.",
+          );
+          if (this.resolveBy.includes("Kruskal")) {
+            scrollIntoView();
+          }
           return;
         }
 
         if (this.main.acceptedNodes.length === 0) {
-          alert("Por favor, seleccione un nodo de inicio y un nodo de fin.");
+          alert(
+            "Para el algoritmo de Dijkstra se necesita un nodo de inicio y un nodo de fin. Por favor, seleccione un nodo de inicio y un nodo de fin.",
+          );
+          if (this.resolveBy.includes("Kruskal")) {
+            scrollIntoView();
+          }
           return;
         }
 
@@ -191,13 +220,15 @@ export class Resolver {
       }
 
       // Scroll into view
-      let offset = 45;
-      let elementPosition = solutionsDiv.getBoundingClientRect().top;
-      let offsetPosition = elementPosition + window.pageYOffset - offset;
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: "smooth",
-      });
+      function scrollIntoView() {
+        let offset = 45;
+        let elementPosition = solutionsDiv.getBoundingClientRect().top;
+        let offsetPosition = elementPosition + window.pageYOffset - offset;
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: "smooth",
+        });
+      }
     });
   };
 

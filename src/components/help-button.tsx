@@ -38,8 +38,10 @@ export const HelpButton = ({ isMaxFlow = false }: { isMaxFlow: boolean }) => {
                 <Kbd>Suprimir</Kbd> para eliminarlo.
               </li>
               <li className={"px-4"}>
-                <Kbd>Shift</Kbd> + click izquierdo en simultáneo para crear una
-                relación entre dos nodos.
+                Para establecer una relación entre dos nodos, posiciona el
+                cursor sobre el primer nodo, luego mantén presionadas la tecla{" "}
+                <Kbd>Shift</Kbd> y el botón izquierdo del mouse mientras
+                arrastras el cursor hacia el nodo de destino.
               </li>
             </ul>
             <h2 className={"text-lg"}>Visualización</h2>

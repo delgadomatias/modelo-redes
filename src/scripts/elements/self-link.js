@@ -1,9 +1,4 @@
-import {
-  drawText,
-  hitTargetPadding,
-  nodeRadius,
-  selectedObject,
-} from "../main-old.js";
+import { hitTargetPadding, nodeRadius } from "../main-old.js";
 
 export class SelfLink {
   constructor(node, mouse) {
@@ -58,35 +53,7 @@ export class SelfLink {
     };
   }
 
-  draw(c) {
-    const stuff = this.getEndPointsAndCircle();
-    // draw arc
-    c.beginPath();
-    c.arc(
-      stuff.circleX,
-      stuff.circleY,
-      stuff.circleRadius,
-      stuff.startAngle,
-      stuff.endAngle,
-      false,
-    );
-    c.stroke();
-    // draw the text on the loop farthest from the node
-    const textX =
-      stuff.circleX + stuff.circleRadius * Math.cos(this.anchorAngle);
-    const textY =
-      stuff.circleY + stuff.circleRadius * Math.sin(this.anchorAngle);
-    drawText(
-      c,
-      this.text,
-      textX,
-      textY,
-      this.anchorAngle,
-      selectedObject === this,
-    );
-    // draw the head of the arrow
-    // drawArrow(c, stuff.endX, stuff.endY, stuff.endAngle + Math.PI * 0.4);
-  }
+  draw(c) {}
 
   containsPoint(x, y) {
     const stuff = this.getEndPointsAndCircle();

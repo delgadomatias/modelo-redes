@@ -18,7 +18,7 @@ export class Main {
   links = [];
   mouse;
   movingObject = false;
-  nodeRadius = 30;
+  nodeRadius = 26;
   nodes = [];
   originalClick;
   selectedObject = null;
@@ -36,6 +36,10 @@ export class Main {
 
     return Main.instance;
   }
+
+  isLastAcceptedNode = (node) => {
+    return this.acceptedNodes[this.acceptedNodes.length - 1] === node;
+  };
 
   setSaveBackupFn = (fn) => {
     this.saveBackupFn = fn;

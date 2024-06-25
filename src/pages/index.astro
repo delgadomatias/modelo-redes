@@ -17,8 +17,17 @@ const options = [
   <div
     class="max-w-[1440px] p-6 mx-auto w-full grid lg:grid-cols-12 items-center justify-center min-h-screen place-content-center"
   >
-    <div class="col-span-12 mb-4 ml-2" transition:name="header">
-      <h2 class="text-5xl w-fit">Kruskal y Dijkstra</h2>
+    <div class="col-span-12 mb-4">
+      <div class="flex justify-between items-end invisible" id="header">
+        <h2 class="text-4xl w-fit" transition:name="header">
+          Kruskal y Dijkstra
+        </h2>
+        <a
+          href="/flujo-maximo"
+          class="text-2xl underline underline-offset-2 cursor-pointer hover:text-red-500 w-fit transition-all duration-75 ease-linear"
+          transition:name="fm-header">Flujo Máximo</a
+        >
+      </div>
     </div>
 
     <canvas
@@ -33,7 +42,7 @@ const options = [
       <div class="flex flex-col gap-2 w-full items-center justify-center">
         <HelpButton client:load isMaxFlow={false} />
 
-        <Button id="reset-btn" color="primary">Limpiar</Button>
+        <Button id="reset-btn" color="secondary">Limpiar</Button>
       </div>
 
       <Divider className="w-1/2" />
@@ -51,46 +60,51 @@ const options = [
           ))
         }
       </CheckboxGroup>
-      <Button color="primary" client:visible id="resolve" className="w-1/2 mt-2"
-        >Resolver</Button
+      <Button
+        color="primary"
+        client:visible
+        id="resolve"
+        variant="shadow"
+        className="w-1/2 mt-2 !py-6 rounded-full">Resolver</Button
       >
     </div>
 
-    <div class="col-span-12 mt-4 ml-2" transition:name="fm-header">
-      <a
-        class="text-4xl underline underline-offset-2 cursor-pointer hover:text-red-500 w-fit transition-all duration-75 ease-linear"
-        href="/flujo-maximo"
-      >
-        Resolver Flujo Máximo
-      </a>
+    <div
+      class="w-full hidden items-center justify-center p-12 flex-col col-span-12"
+      id="solutions-container"
+    >
+      <h1 class="text-7xl font-bold mb-12">Soluciones</h1>
+      <div id="solutions-div" class="flex flex-col gap-12"></div>
     </div>
   </div>
 
-  <div
-    class="w-full hidden items-center justify-center p-12 flex-col"
-    id="solutions-container"
-  >
-    <h1 class="text-7xl font-bold mb-12">Soluciones</h1>
-    <div id="solutions-div" class="flex flex-col gap-12"></div>
-  </div>
+  <script>
+    import { Main } from "../scripts/main";
+    import { Resolver } from "../scripts/resolver";
+    import { saveBackup } from "../scripts/utils";
+
+    window.addEventListener("resize", resizeHeader);
+
+    function resizeHeader() {
+      const header = document.querySelector("#header");
+      const canvas = document.querySelector("canvas");
+      header.style.width = `${canvas.clientWidth}px`;
+      header.classList.remove("invisible");
+    }
+
+    function init() {
+      if (window.location.pathname !== "/") return;
+      resizeHeader();
+
+      const main = Main.getInstance();
+      main.makeRestoreBackup("pyd");
+      main.setSaveBackupFn(saveBackup);
+      main.startListeners(document.querySelector("#canvas"));
+
+      const resolver = Resolver.getInstance();
+      resolver.runForPrimAndDijkstra();
+    }
+
+    document.addEventListener("astro:page-load", init);
+  </script>
 </Layout>
-
-<script>
-  import { Main } from "../scripts/main";
-  import { Resolver } from "../scripts/resolver";
-  import { saveBackup } from "../scripts/utils";
-
-  function init() {
-    if (window.location.pathname !== "/") return;
-
-    const main = Main.getInstance();
-    main.makeRestoreBackup("pyd");
-    main.setSaveBackupFn(saveBackup);
-    main.startListeners(document.querySelector("#canvas"));
-
-    const resolver = Resolver.getInstance();
-    resolver.runForPrimAndDijkstra();
-  }
-
-  document.addEventListener("astro:page-load", init);
-</script>

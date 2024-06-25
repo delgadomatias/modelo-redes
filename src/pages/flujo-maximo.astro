@@ -8,8 +8,16 @@ import { HelpButton } from "../components/help-button";
   <div
     class="max-w-[1440px] p-6 mx-auto w-full grid lg:grid-cols-12 items-center justify-center min-h-screen place-content-center"
   >
-    <div class="col-span-12 mb-4 ml-2" transition:name="fm-header">
-      <h2 class="text-5xl w-fit ease-linear">Resolver Flujo Máximo</h2>
+    <div class="col-span-12 mb-4">
+      <div class="flex justify-between items-end invisible" id="header">
+        <h2 class="text-4xl w-fit" transition:name="fm-header">Flujo Máximo</h2>
+        <a
+          transition:name="header"
+          href="/"
+          class="text-2xl underline underline-offset-2 cursor-pointer hover:text-red-500 w-fit transition-all duration-75 ease-linear"
+          >Kruskal y Dijkstra</a
+        >
+      </div>
     </div>
     <canvas
       id="fm-canvas"
@@ -23,23 +31,18 @@ import { HelpButton } from "../components/help-button";
       <div class="flex flex-col gap-2 w-full items-center justify-center">
         <HelpButton client:load isMaxFlow={true} />
 
-        <Button color="primary" id="fm-reset-btn">Limpiar</Button>
+        <Button color="secondary" id="fm-reset-btn">Limpiar</Button>
       </div>
 
       <Divider className="w-1/2" />
 
-      <Button color="primary" client:visible id="fm-resolve" className="w-1/2"
-        >Resolver</Button
+      <Button
+        color="primary"
+        client:visible
+        id="fm-resolve"
+        variant="shadow"
+        className="w-1/2 py-6 rounded-full">Resolver</Button
       >
-    </div>
-
-    <div class="col-span-12 mt-4 ml-2" transition:name="header">
-      <a
-        href="/"
-        class="text-4xl underline underline-offset-2 cursor-pointer hover:text-red-500 w-fit transition-all duration-75 ease-linear"
-      >
-        Kruskal y Dijkstra
-      </a>
     </div>
   </div>
 
@@ -57,8 +60,18 @@ import { HelpButton } from "../components/help-button";
   import { saveBackup } from "../scripts/utils";
   import { Resolver } from "../scripts/resolver";
 
+  window.addEventListener("resize", resizeHeader);
+
+  function resizeHeader() {
+    const header = document.querySelector("#header");
+    const canvas = document.querySelector("canvas");
+    header.style.width = `${canvas.clientWidth}px`;
+    header.classList.remove("invisible");
+  }
+
   function init() {
     if (window.location.pathname !== "/flujo-maximo") return;
+    resizeHeader();
 
     const main = Main.getInstance();
     main.makeRestoreBackup("fm");

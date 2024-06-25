@@ -83,10 +83,9 @@ export class Resolver {
         existentDijkstraSolution.remove();
       }
 
-      solutionsContainer.classList.remove("hidden");
-      solutionsContainer.classList.add("flex");
-
       if (this.resolveBy.includes("Kruskal")) {
+        solutionsContainer.classList.remove("hidden");
+        solutionsContainer.classList.add("flex");
         const finalWeight = this.resolveByKruskal();
         solutionsDiv.innerHTML = "";
 
@@ -133,6 +132,18 @@ export class Resolver {
       }
 
       if (this.resolveBy.includes("Dijkstra")) {
+        if (this.main.acceptedNodes.length === 1) {
+          alert("Por favor, seleccione un nodo de fin.");
+          return;
+        }
+
+        if (this.main.acceptedNodes.length === 0) {
+          alert("Por favor, seleccione un nodo de inicio y un nodo de fin.");
+          return;
+        }
+
+        solutionsContainer.classList.remove("hidden");
+        solutionsContainer.classList.add("flex");
         const { path, sumWeight } = this.resolveByDijkstra();
         this.dijkstraSolution = path;
 
@@ -199,6 +210,16 @@ export class Resolver {
   };
 
   onResolve = () => {
+    if (this.main.acceptedNodes.length === 1) {
+      alert("Por favor, seleccione un nodo de fin.");
+      return;
+    }
+
+    if (this.main.acceptedNodes.length === 0) {
+      alert("Por favor, seleccione un nodo de inicio y un nodo de fin.");
+      return;
+    }
+
     const solutionsContainer = document.querySelector(
       "#fm-solutions-container",
     );

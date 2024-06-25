@@ -13,12 +13,12 @@ export const HelpButton = ({ isMaxFlow = false }: { isMaxFlow: boolean }) => {
 
   return (
     <>
-      <Button onPress={onOpen} className="max-w-fit" color={"primary"}>
+      <Button onPress={onOpen} className="max-w-fit" color={"secondary"}>
         Ayuda
       </Button>
       <Modal
         isOpen={isOpen}
-        size={"2xl"}
+        size={"3xl"}
         placement="auto"
         onOpenChange={onOpenChange}
         backdrop={"blur"}
@@ -27,19 +27,35 @@ export const HelpButton = ({ isMaxFlow = false }: { isMaxFlow: boolean }) => {
           <ModalHeader className="flex flex-col gap-1">Ayuda</ModalHeader>
           <ModalBody>
             <h2 className={"text-lg"}>Controles</h2>
-            <ul className={"list-disc list-inside flex flex-col gap-2 pb-6"}>
+            <ul className={"list-disc list-inside flex flex-col gap-2 pb-2"}>
               <li className={"px-4"}>Doble click para crear un nodo.</li>
               <li className={"px-4"}>
-                Doble click para indicar que un nodo es un nodo de inicio o fin.
+                Doble click sobre un nodo para indicar que el mismo es de inicio
+                o fin.
               </li>
               <li className={"px-4"}>
-                <Kbd keys={"delete"}>Suprimir</Kbd> para eliminar un nodo.
+                Seleccionar el nodo con un click y presionar la tecla{" "}
+                <Kbd>Suprimir</Kbd> para eliminarlo.
               </li>
               <li className={"px-4"}>
-                <Kbd keys={"shift"}>Shift + click izquierdo</Kbd> en simultáneo
-                para crear una relación.
+                <Kbd>Shift</Kbd> + click izquierdo en simultáneo para crear una
+                relación entre dos nodos.
               </li>
             </ul>
+            <h2 className={"text-lg"}>Visualización</h2>
+            <ul
+              className={`list-disc list-inside flex flex-col gap-2 ${!isMaxFlow ? "pb-6" : "pb-2"}`}
+            >
+              <li className={"px-4"}>
+                El color <span className={"text-blue-700"}>azul</span>{" "}
+                representa un nodo de inicio.
+              </li>
+              <li className={"px-4"}>
+                El color <span className={"text-green-700"}>verde</span>{" "}
+                representa un nodo de fin.
+              </li>
+            </ul>
+
             {isMaxFlow && (
               <>
                 <h2 className={"text-lg"}>Relaciones</h2>
@@ -47,7 +63,9 @@ export const HelpButton = ({ isMaxFlow = false }: { isMaxFlow: boolean }) => {
                   className={"list-disc list-inside flex flex-col gap-2 pb-6"}
                 >
                   <li className={"px-4"}>
-                    Separar el valor de la relación con una barra ( / )
+                    Al momento de ingresar el valor de una relación ingresar una
+                    barra vertical <Kbd>/</Kbd> para separar los valores de los
+                    flujos.
                   </li>
                 </ul>
               </>

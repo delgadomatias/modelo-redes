@@ -39,8 +39,14 @@ export class Node {
 
     // draw a double circle for an accept state
     if (this.isAcceptState) {
+      const isLastAccepted = this.main.isLastAcceptedNode(this);
+      const color = isLastAccepted ? "blue" : "green";
+
+      c.strokeStyle = color;
+      c.fillStyle = color;
+
       c.beginPath();
-      c.arc(this.x, this.y, this.main.nodeRadius - 6, 0, 2 * Math.PI, false);
+      c.arc(this.x, this.y, this.main.nodeRadius, 0, 2 * Math.PI, false);
       c.stroke();
     }
   };

@@ -324,9 +324,15 @@ export class Resolver {
     newH3.className = "font-medium text-3xl ml-2";
     div.append(newH3);
 
+    const affectedNodes = new Set();
+    newLinks.forEach((link) => {
+      affectedNodes.add(link.nodeA);
+      affectedNodes.add(link.nodeB);
+    });
+
     this.main.drawSolution(
       newCanvas.getContext("2d"),
-      this.main.nodes,
+      Array.from(affectedNodes),
       newLinks,
     );
     let offset = 45;

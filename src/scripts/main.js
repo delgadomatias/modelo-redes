@@ -414,7 +414,12 @@ export class Main {
         }
         this.resetCaret();
       } else if (this.shift) {
-        this.currentLink = new TemporaryLink(this.mouse, this.mouse);
+        const nodeUnderMouse = this.nodes.find((node) =>
+          node.containsPoint(this.mouse.x, this.mouse.y),
+        );
+        if (nodeUnderMouse) {
+          this.currentLink = new TemporaryLink(this.mouse, this.mouse);
+        }
       }
 
       this.draw();

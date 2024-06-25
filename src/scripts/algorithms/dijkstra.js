@@ -72,14 +72,14 @@ class PriorityQueue {
 
 export class WeightedGraph {
   constructor() {
-    this.adjacencyList = {};
+    this.adjacencyList = {};      
   }
   addVertex(vertex) {
     if (!this.adjacencyList[vertex]) this.adjacencyList[vertex] = [];
   }
   addEdge(vertex1, vertex2, weight) {
     this.adjacencyList[vertex1].push({ node: vertex2, weight });
-    this.adjacencyList[vertex2].push({ node: vertex1, weight });
+    this.adjacencyList[vertex2].push({ node: vertex1, weight : weight * 99999999 });
   }
 
   Dijkstra(start, finish) {
@@ -131,10 +131,11 @@ export class WeightedGraph {
     }
 
     const sumWeight = path.reduce((acc, node) => {
-      return (
-        acc +
-        this.adjacencyList[node].find((n) => n.node === previous[node]).weight
-      );
+      //previousNode = this.adjacencyList[node].find((n) => n.node === previous[node])
+        return (
+          acc +
+          this.adjacencyList[node].find((n) => n.node === previous[node]).weight / 99999999 
+        );
     }, 0);
 
     return { path: path.concat(smallest).reverse(), sumWeight };

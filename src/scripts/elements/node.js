@@ -40,7 +40,13 @@ export class Node {
     // draw a double circle for an accept state
     if (this.isAcceptState) {
       const isLastAccepted = this.main.isLastAcceptedNode(this);
-      const color = isLastAccepted ? "blue" : "green";
+      let color;
+
+      color = isLastAccepted ? "blue" : "green";
+
+      if (this.main.acceptedNodes.length === 1) {
+        color = "green";
+      }
 
       c.strokeStyle = color;
       c.fillStyle = color;

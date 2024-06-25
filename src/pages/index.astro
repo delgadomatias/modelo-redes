@@ -39,13 +39,18 @@ const options = [
       class="bg-[#1d1e28] h-[550px] flex items-center justify-center rounded-xl flex-col gap-4 col-span-3 w-[300px] -ml-4"
       style="box-shadow: 10px 10px 30px rgb(0 0 0 / 8%)"
     >
-      <div class="flex flex-col gap-2 w-full items-center justify-center">
+      <div
+        class="flex flex-col gap-2 w-full items-center justify-center"
+        transition:name="fm-actions"
+      >
         <HelpButton client:load isMaxFlow={false} />
 
-        <Button id="reset-btn" color="secondary">Limpiar</Button>
+        <Button id="reset-btn" color="secondary" client:load>Limpiar</Button>
       </div>
 
-      <Divider className="w-1/2" />
+      <div class="w-1/2" transition:name="divider">
+        <Divider className="w-full" />
+      </div>
 
       <CheckboxGroup id="checkbox-group" client:visible label="Algoritmos">
         {
@@ -60,13 +65,15 @@ const options = [
           ))
         }
       </CheckboxGroup>
-      <Button
-        color="primary"
-        client:load
-        id="resolve"
-        variant="shadow"
-        className="w-1/2 mt-2 !py-6 rounded-full">Resolver</Button
-      >
+      <div class="w-1/2" transition:name="resolver">
+        <Button
+          color="primary"
+          client:load
+          id="resolve"
+          variant="shadow"
+          className="w-full mt-2 !py-6 rounded-full">Resolver</Button
+        >
+      </div>
 
       <div
         class="opacity-50 hover:opacity-100 mt-4 transition-opacity duration-75 ease-linear"

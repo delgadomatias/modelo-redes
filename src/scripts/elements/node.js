@@ -42,10 +42,10 @@ export class Node {
       const isLastAccepted = this.main.isLastAcceptedNode(this);
       let color;
 
-      color = isLastAccepted ? "blue" : "green";
+      color = isLastAccepted ? "green" : "blue";
 
       if (this.main.acceptedNodes.length === 1) {
-        color = "green";
+        color = "blue";
       }
 
       c.strokeStyle = color;

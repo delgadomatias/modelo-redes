@@ -189,6 +189,20 @@ export class Resolver {
           return;
         }
 
+        if (this.checkEmptyNodeText()) {
+          alert(
+            "Error, hay nodos sin nombre. Por favor, añada un nombre a todos los nodos.",
+          );
+          return;
+        }
+
+        if (this.checkEmptyLinkText()) {
+          alert(
+            "Error, hay relaciones sin valor. Por favor, añada un valor a todos las relaciones.",
+          );
+          return;
+        }
+
         if (this.main.acceptedNodes.length === 1) {
           alert(
             "Para el algoritmo de Dijkstra se necesita un nodo de fin. Por favor, seleccione un nodo de fin.",
@@ -280,6 +294,7 @@ export class Resolver {
   };
 
   onResolve = () => {
+    console.log(this.main.acceptedNodes);
     if (this.main.acceptedNodes.length === 1) {
       alert("Por favor, seleccione un nodo de fin.");
       return;

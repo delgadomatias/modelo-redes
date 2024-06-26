@@ -329,6 +329,11 @@ export class Main {
               this.links.splice(i--, 1);
             }
           }
+          if (this.acceptedNodes.includes(this.selectedObject)) {
+            this.acceptedNodes = this.acceptedNodes.filter(
+              (node) => node !== this.selectedObject,
+            );
+          }
           this.selectedObject = null;
           this.draw();
         }

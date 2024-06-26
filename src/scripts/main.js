@@ -8,6 +8,8 @@ import {
 import { restoreBackup } from "./utils/index.js";
 
 export class Main {
+  nodeExistenceCheckTimeout = null;
+
   acceptedNodes = [];
   canvas;
   caretTimer;

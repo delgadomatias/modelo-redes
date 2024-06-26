@@ -20,17 +20,29 @@ export class Resolver {
     return Resolver.instance;
   }
 
-  runForPrimAndDijkstra = () => {
-    // Check if some node has no relation
-    const checkLinks = () => {
-      let nodes = this.main.nodes.map((node) => node.text);
-      let links = this.main.links.map((link) => [
-        link.nodeA.text,
-        link.nodeB.text,
-      ]);
-      return nodes.filter((node) => !links.flat().includes(node)).length > 0;
-    };
+  nodeWithoutLink = () => {
+    let nodes = this.main.nodes.map((node) => node.text);
+    let links = this.main.links.map((link) => [
+      link.nodeA.text,
+      link.nodeB.text,
+    ]);
+    return nodes.filter((node) => !links.flat().includes(node)).length > 0;
+  };
 
+  checkDuplicatesNodeText = () => {
+    let nodes = this.main.nodes.map((node) => node.text);
+    return new Set(nodes).size !== nodes.length;
+  };
+
+  checkEmptyNodeText() {
+    return this.main.nodes.some((node) => node.text === "");
+  }
+
+  checkEmptyLinkText() {
+    return this.main.links.some((link) => link.text === "");
+  }
+
+  runForPrimAndDijkstra = () => {
     const dijkstraOption = document.querySelector("#Dijkstra-option input");
     const primOption = document.querySelector("#Kruskal-option input");
     const resetButton = document.querySelector("#reset-btn");
@@ -94,10 +106,30 @@ export class Resolver {
       }
 
       if (this.resolveBy.includes("Kruskal")) {
-        if (checkLinks()) {
+        if (this.nodeWithoutLink()) {
           alert("Por favor, complete todas las relaciones entre nodos.");
           return;
         }
+
+        if (this.checkDuplicatesNodeText()) {
+          alert("Error, hay nodos con el mismo nombre. Por favor, cámbielos.");
+          return;
+        }
+
+        if (this.checkEmptyLinkText()) {
+          alert(
+            "Error, hay relaciones sin valor. Por favor, añada un valor a todos las relaciones.",
+          );
+          return;
+        }
+
+        if (this.checkEmptyNodeText()) {
+          alert(
+            "Error, hay nodos sin nombre. Por favor, añada un nombre a todos los nodos.",
+          );
+          return;
+        }
+
         solutionsContainer.classList.remove("hidden");
         solutionsContainer.classList.add("flex");
         const finalWeight = this.resolveByKruskal();
@@ -147,10 +179,16 @@ export class Resolver {
       }
 
       if (this.resolveBy.includes("Dijkstra")) {
-        if (checkLinks()) {
+        if (this.nodeWithoutLink()) {
           alert("Por favor, complete todas las relaciones entre nodos.");
           return;
         }
+
+        if (this.checkDuplicatesNodeText()) {
+          alert("Error, hay nodos con el mismo nombre. Por favor, cámbielos.");
+          return;
+        }
+
         if (this.main.acceptedNodes.length === 1) {
           alert(
             "Para el algoritmo de Dijkstra se necesita un nodo de fin. Por favor, seleccione un nodo de fin.",
@@ -252,6 +290,16 @@ export class Resolver {
       return;
     }
 
+    if (this.nodeWithoutLink()) {
+      alert("Por favor, complete todas las relaciones entre nodos.");
+      return;
+    }
+
+    if (this.checkDuplicatesNodeText()) {
+      alert("Error, hay nodos con el mismo nombre. Por favor, cámbielos.");
+      return;
+    }
+
     const solutionsContainer = document.querySelector(
       "#fm-solutions-container",
     );
@@ -303,6 +351,8 @@ export class Resolver {
             link.text = `${flow}`;
             newLinks.push(link);
           }
+
+          // Ahora falta agregar el flujo residual
         }
       });
     });
